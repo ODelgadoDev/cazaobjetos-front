@@ -307,3 +307,26 @@ a { color: inherit; text-decoration: none; }
   .notice .btn { margin-left: 0; }
   .install-btn__txt { display: none; }
 }
+
+/* ===== Cuentas, publicaciones y detalles ===== */
+.auth-links { margin: 0; text-align: center; color: var(--texto-tenue); }
+.auth-links a, .link { color: var(--verde); font-weight: 700; text-decoration: underline; }
+.code-input { font-size: 22px; letter-spacing: .4em; text-align: center; }
+.card h3 a { text-decoration: underline; text-decoration-color: var(--linea-fuerte); text-underline-offset: 3px; }
+.card h3 a:hover { color: var(--verde-oscuro); }
+.perfil { display: flex; gap: 12px; align-items: center; }
+.perfil > div { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; min-width: 0; }
+.avatar--lg { width: 56px; height: 56px; flex: none; }
+.inline-form { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px dashed var(--linea-fuerte); border-radius: var(--radius-md); }
+.acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.acciones .btn { width: auto; flex: 1 1 140px; }
+.acciones .btn--link-danger { flex-basis: 100%; }
+.fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.fotos__item { margin: 0; position: relative; aspect-ratio: 1; border-radius: var(--radius-md); overflow: hidden; background: var(--superficie-tenue); }
+.fotos__item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fotos__quitar {
+  position: absolute; top: 6px; right: 6px; width: 36px; height: 36px; border: 0; border-radius: var(--radius-pill);
+  background: rgba(255,255,255,.92); color: var(--peligro-tx); display: grid; place-items: center;
+}
+.fotos__nueva { aspect-ratio: 1; justify-content: center; padding: 8px; }
+.metabox .progress, .metabox .progress-labels { display: grid; } /* `.metabox div` no debe romper la rejilla del progreso */

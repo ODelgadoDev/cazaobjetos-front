@@ -16,12 +16,17 @@ function Categorias({ value, onChange }) {
   )
 }
 
-function FormEncontre() {
+/**
+ * Formulario de hallazgo. Sin props publica uno nuevo.
+ * Con `edicion = { inicial, onGuardar }` corrige uno existente: solo datos del objeto
+ * (las fotos, el resguardo y la delegación se gestionan aparte).
+ */
+export function FormEncontre({ edicion }) {
   const navigate = useNavigate()
   const toast = useToast()
-  const [f, setF] = useState({ titulo: '', categoria: 'Electrónica', lugar: '', fecha: hoyISO(), hora: ahoraHora(), descripcion: '', gestion: 'yo', delegadoId: '', enOficina: false, caseta: CASETAS[0] })
+  const [f, setF] = useState(() => ({ titulo: '', categoria: 'Electrónica', lugar: '', fecha: hoyISO(), hora: ahoraHora(), descripcion: '', gestion: 'yo', delegadoId: '', enOficina: false, caseta: CASETAS[0], ...edicion?.inicial }))
   const [delegados, setDelegados] = useState([])
-  useEffect(() => { listDelegados().then(setDelegados).catch(() => {}) }, [])
+  useEffect(() => { if (!edicion) listDelegados().then(setDelegados).catch(() => {}) }, [edicion])
   const [foto, setFoto] = useState(null)
   const [preview, setPreview] = useState('')
   const [error, setError] = useState('')
@@ -39,17 +44,22 @@ function FormEncontre() {
     r.readAsDataURL(file)
   }
 
-  const valido = f.titulo.trim() && f.lugar.trim() && f.fecha && (f.gestion === 'yo' || f.delegadoId) && (!f.enOficina || f.caseta)
+  const valido = f.titulo.trim() && f.lugar.trim() && f.fecha && (edicion || ((f.gestion === 'yo' || f.delegadoId) && (!f.enOficina || f.caseta)))
 
   async function enviar(e) {
     e.preventDefault()
-    if (!valido) return setError('Completa el nombre, el lugar, la fecha y quién gestionará la devolución.')
+    if (!valido) return setError(edicion ? 'Completa el nombre, el lugar y la fecha.' : 'Completa el nombre, el lugar, la fecha y quién gestionará la devolución.')
     setEnviando(true)
     setError('')
+    if (edicion) {
+      const { titulo, categoria, lugar, fecha, hora, descripcion } = f
+      try { await edicion.onGuardar({ titulo: titulo.trim(), categoria, lugar: lugar.trim(), fecha, hora, descripcion }) } catch (err) { setError(err.message); setEnviando(false) }
+      return
+    }
     try {
       const h = await crearHallazgo({ ...f, foto, fotoPreview: preview })
       toast(`Hallazgo publicado. Folio ${h.folio}`)
-      navigate('/')
+      navigate('/?tab=encontrados')
     } catch (err) {
       setError(err.message)
       setEnviando(false)
@@ -58,12 +68,12 @@ function FormEncontre() {
 
   return (
     <form className="card" onSubmit={enviar} noValidate>
-      <label className="dropzone">
+      {!edicion && <label className="dropzone">
         {preview ? <img src={preview} alt="Vista previa del objeto" /> : <IconImage width={28} height={28} />}
         <strong>Tomar o subir foto del objeto</strong>
         <span className="muted">Evita mostrar datos personales</span>
         <input type="file" accept="image/*" capture="environment" onChange={onFoto} aria-label="Foto del objeto" />
-      </label>
+      </label>}
       <div className="field"><label htmlFor="titulo">Nombre del objeto</label><input id="titulo" className="input" placeholder="ej. Calculadora Casio fx-991" value={f.titulo} onChange={set('titulo')} /></div>
       <div className="field"><span className="label">Categoría</span><Categorias value={f.categoria} onChange={(c) => setF({ ...f, categoria: c })} /></div>
       <div className="field"><label htmlFor="lugar">¿Dónde lo encontraste?</label><input id="lugar" className="input" placeholder="ej. Biblioteca piso 2, Mesa 14" value={f.lugar} onChange={set('lugar')} /></div>
@@ -71,6 +81,7 @@ function FormEncontre() {
         <div className="field"><label htmlFor="fecha">Fecha</label><input id="fecha" type="date" className="input mono" max={hoyISO()} value={f.fecha} onChange={set('fecha')} /></div>
         <div className="field"><label htmlFor="hora">Hora</label><input id="hora" type="time" className="input mono" value={f.hora} onChange={set('hora')} /></div>
       </div>
+      {!edicion && <>
       <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="label">¿Quién gestionará la devolución?</legend>
         <label className="check"><input type="radio" name="gestion" checked={f.gestion === 'yo'} onChange={() => setF({ ...f, gestion: 'yo' })} /><span>Yo, la persona que lo encontró</span></label>
@@ -92,18 +103,26 @@ function FormEncontre() {
           <select id="caseta" className="select" value={f.caseta} onChange={set('caseta')}>{CASETAS.map((c) => <option key={c}>{c}</option>)}</select>
         </div>
       )}
+      </>}
       <div className="field"><label htmlFor="desc">Descripción visible</label><textarea id="desc" className="textarea" placeholder="Color, marca, estado… (no describas detalles privados)" value={f.descripcion} onChange={set('descripcion')} /></div>
       {error && <div className="notice notice--peligro" role="alert">{error}</div>}
-      <button className="btn btn--primary" disabled={enviando}><IconSend width={18} height={18} /> {enviando ? 'Publicando…' : 'Publicar hallazgo'}</button>
-      <p className="help" style={{ textAlign: 'center', margin: 0 }}>SE GENERARÁ UN FOLIO #UTCH-AAAA-NNNN</p>
+      {edicion ? (
+        <button className="btn btn--primary" disabled={enviando}>{enviando ? 'Guardando…' : 'Guardar cambios'}</button>
+      ) : (
+        <>
+          <button className="btn btn--primary" disabled={enviando}><IconSend width={18} height={18} /> {enviando ? 'Publicando…' : 'Publicar hallazgo'}</button>
+          <p className="help" style={{ textAlign: 'center', margin: 0 }}>SE GENERARÁ UN FOLIO #UTCH-AAAA-NNNN</p>
+        </>
+      )}
     </form>
   )
 }
 
-function FormPerdi() {
+/** Formulario de extravío. Con `edicion = { inicial, onGuardar }` corrige uno existente. */
+export function FormPerdi({ edicion }) {
   const navigate = useNavigate()
   const toast = useToast()
-  const [f, setF] = useState({ titulo: '', categoria: 'Electrónica', lugar: '', fecha: hoyISO(), descripcion: '', alertas: true })
+  const [f, setF] = useState(() => ({ titulo: '', categoria: 'Electrónica', lugar: '', fecha: hoyISO(), descripcion: '', alertas: true, ...edicion?.inicial }))
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
@@ -113,10 +132,15 @@ function FormPerdi() {
     if (!f.titulo.trim() || !f.lugar.trim()) return setError('Escribe qué perdiste y dónde crees que fue.')
     setEnviando(true)
     setError('')
+    if (edicion) {
+      const { titulo, categoria, lugar, fecha, descripcion, alertas } = f
+      try { await edicion.onGuardar({ titulo: titulo.trim(), categoria, lugar: lugar.trim(), fecha, descripcion, alertas }) } catch (err) { setError(err.message); setEnviando(false) }
+      return
+    }
     try {
       await crearExtravio(f)
       toast('Reporte creado. Te avisaremos si aparece algo parecido.')
-      navigate('/reclamos')
+      navigate('/publicaciones?tab=extravios')
     } catch (err) {
       setError(err.message)
       setEnviando(false)
@@ -135,7 +159,9 @@ function FormPerdi() {
         <span>Avísame por correo cuando aparezca un objeto parecido.</span>
       </label>
       {error && <div className="notice notice--peligro" role="alert">{error}</div>}
-      <button className="btn btn--primary" disabled={enviando}><IconSend width={18} height={18} /> {enviando ? 'Enviando…' : 'Crear reporte de extravío'}</button>
+      {edicion
+        ? <button className="btn btn--primary" disabled={enviando}>{enviando ? 'Guardando…' : 'Guardar cambios'}</button>
+        : <button className="btn btn--primary" disabled={enviando}><IconSend width={18} height={18} /> {enviando ? 'Enviando…' : 'Crear reporte de extravío'}</button>}
     </form>
   )
 }

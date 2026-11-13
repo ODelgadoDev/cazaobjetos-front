@@ -12,11 +12,30 @@ Usuarios de prueba (cualquier contraseña): `estudiante@utch.edu.mx`, `docente@u
 1. Copia `.env.example` a `.env` y pon `VITE_API_URL=http://localhost:3000/api` (la URL de su back).
 2. Todo el acceso a datos está en `src/lib/api.js`. Los endpoints ahí escritos son el **contrato propuesto**: acuérdenlo con quien hace el back y ajusten solo ese archivo.
 
+### Endpoints que espera el front (por acordar con el back)
+| Pantalla | Método y ruta |
+|---|---|
+| Crear cuenta | `POST /auth/registro` `{ nombre, correo, password }` |
+| Verificar correo | `POST /auth/verificar` `{ correo, codigo }` · `POST /auth/verificar/reenviar` `{ correo }` |
+| Recuperar contraseña | `POST /auth/recuperar` `{ correo }` · `POST /auth/recuperar/confirmar` `{ correo, codigo, password }` |
+| Iniciar sesión | `POST /auth/login` → si falta verificar, error con `code: 'CORREO_NO_VERIFICADO'` |
+| Mi cuenta | `GET /usuarios/yo` · `POST /usuarios/yo/password` `{ actual, nueva }` |
+| Mis publicaciones | `GET /publicaciones/mias` → `{ hallazgos, delegados, extravios }`, cada item con `permisos` |
+| Acciones de hallazgo | `POST /hallazgos/:id/resguardo` · `POST /hallazgos/:id/delegar` · `DELETE /hallazgos/:id` |
+| Acciones de extravío | `POST /extravios/:id/recuperado` · `DELETE /extravios/:id` |
+| Editar publicación | `PATCH /hallazgos/:id` · `PATCH /extravios/:id` · `POST/DELETE /{hallazgos\|extravios}/:id/fotos[/:fotoId]` |
+| Consultar extravíos | `GET /extravios?q&categoria&zona&orden&estado&page&pageSize` → `{ items, total }` · `GET /extravios/:id` |
+| Detalle de reclamo | `GET /reclamos/:id` → reclamo + `hallazgo`, `gestor`, `rolEnReclamo`, `permisos` |
+
+Los botones de cada publicación y reclamo se muestran según el objeto `permisos` que devuelve el back (en el mock se calcula en `api.js`).
+Errores: el front lee `message` (texto para el usuario) y `code` del cuerpo JSON.
+
 ## Estructura
 - `src/index.css` — tokens y componentes de la guía de estilo (colores, tipografía, chips, botones…)
 - `public/utch-logo.png` — logotipo de la Universidad Tecnológica de Chihuahua
 - `src/lib/constants.js` — categorías, casetas y estados de reclamo
-- `src/pages/` — Explorar, Reclamo, MisReclamos, Vigilancia, Reportar, Login
+- `src/pages/` — Login, Registro, Verificar, Recuperar, Explorar (abre en «Se buscan»; «Encontrados» con `?tab=encontrados`), Reclamo, MisReclamos, DetalleReclamo, Reportar, MisPublicaciones, EditarPublicacion, DetalleExtravio, MiCuenta, Vigilancia
+- En modo de prueba, el código de verificación y de recuperación es `123456`.
 - `src/components/` — Layout (barra superior e inferior), Chip, ObjectCard, Toast, Icons
 
 ## Flujo implementado (según los diagramas del back)

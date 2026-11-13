@@ -25,3 +25,20 @@ export const ESTADOS_HALLAZGO = {
 }
 
 export const ETAPAS = ['Enviado', 'Revisión', 'Aprobado', 'Entregado']
+
+// Estado del reporte de extravío
+export const ESTADOS_EXTRAVIO = {
+  activo: { label: 'Se busca', chip: 'pend' },
+  recuperado: { label: 'Recuperado', chip: 'ok' },
+}
+
+export const ROLES = {
+  estudiante: 'Estudiante',
+  docente: 'Docente',
+  secretaria: 'Secretaría',
+  vigilancia: 'Vigilancia',
+  administrador: 'Administrador',
+}
+
+export const DOMINIO = '@utch.edu.mx'
+export const MIN_PASSWORD = 8

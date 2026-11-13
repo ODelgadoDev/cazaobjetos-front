@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { listHallazgos } from '../lib/api.js'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { listExtravios, listHallazgos } from '../lib/api.js'
 import { CATEGORIAS, UBICACIONES } from '../lib/constants.js'
-import ObjectCard from '../components/ObjectCard.jsx'
+import ObjectCard, { ExtravioCard } from '../components/ObjectCard.jsx'
 import { IconInfo, IconSearch } from '../components/Icons.jsx'
 
 const PAGE_SIZE = 5
 
 export default function Explorar() {
   const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
+  const tab = params.get('tab') === 'encontrados' ? 'hallazgos' : 'extravios' // por defecto: Se buscan
+  const [estado, setEstado] = useState('activo')
   const [q, setQ] = useState('')
   const [categoria, setCategoria] = useState('Todos')
   const [zona, setZona] = useState('Todos')
@@ -22,24 +25,42 @@ export default function Explorar() {
     let vivo = true
     setCargando(true)
     const t = setTimeout(() => {
-      listHallazgos({ q, categoria, zona, orden, page, pageSize: PAGE_SIZE })
+      const pedir = tab === 'extravios'
+        ? listExtravios({ q, categoria, zona, orden, estado, page, pageSize: PAGE_SIZE })
+        : listHallazgos({ q, categoria, zona, orden, page, pageSize: PAGE_SIZE })
+      pedir
         .then((d) => { if (vivo) { setData(d); setError('') } })
         .catch((e) => vivo && setError(e.message))
         .finally(() => vivo && setCargando(false))
     }, 250)
     return () => { vivo = false; clearTimeout(t) }
-  }, [q, categoria, zona, orden, page])
+  }, [tab, q, categoria, zona, orden, estado, page])
 
   const totalPag = Math.max(1, Math.ceil(data.total / PAGE_SIZE))
   const cambiar = (setter) => (v) => { setter(v); setPage(1) }
+  const cambiarTab = (t) => { setData({ items: [], total: 0 }); setPage(1); setParams(t === 'hallazgos' ? { tab: 'encontrados' } : {}) }
+  const extr = tab === 'extravios'
 
   return (
     <>
+      <div className="tabs" role="tablist" aria-label="Qué quieres ver">
+        <button role="tab" aria-selected={extr} className={extr ? 'is-active' : ''} onClick={() => cambiarTab('extravios')}>Se buscan</button>
+        <button role="tab" aria-selected={!extr} className={!extr ? 'is-active' : ''} onClick={() => cambiarTab('hallazgos')}>Encontrados</button>
+      </div>
+
+      {extr ? (
+        <div className="notice notice--info">
+          <IconInfo width={20} height={20} />
+          <span className="grow">¿Encontraste uno de estos? Publícalo y su dueño recibirá una alerta.</span>
+          <button className="btn btn--dark" onClick={() => navigate('/reportar')}>Reportar</button>
+        </div>
+      ) : (
       <div className="notice notice--info">
         <IconInfo width={20} height={20} />
         <span className="grow">¿Perdiste algo y no lo ves?</span>
         <button className="btn btn--dark" onClick={() => navigate('/reportar?tab=perdi')}>Crear alerta</button>
       </div>
+      )}
 
       <div className="field">
         <div style={{ position: 'relative' }}>
@@ -66,19 +87,26 @@ export default function Explorar() {
           {UBICACIONES.map((u) => <option key={u}>{u}</option>)}
         </select>
       </div>
+      {extr && (
+        <select className="select select--tenue" aria-label="Filtrar por estado" value={estado} onChange={(e) => cambiar(setEstado)(e.target.value)}>
+          <option value="activo">Estado: Se buscan</option>
+          <option value="recuperado">Estado: Recuperados</option>
+          <option value="Todos">Estado: Todos</option>
+        </select>
+      )}
 
       <div className="pager">
-        <strong>{data.total} objetos encontrados</strong>
+        <strong>{data.total} {extr ? 'reportes de extravío' : 'objetos encontrados'}</strong>
         <span className="mono muted" style={{ fontSize: 12 }}>PÁG {page} / {totalPag}</span>
       </div>
 
       {error && <div className="notice notice--peligro" role="alert">{error}</div>}
-      {cargando && !data.items.length && <p className="empty">Cargando objetos…</p>}
+      {cargando && !data.items.length && <p className="empty">{extr ? 'Cargando reportes…' : 'Cargando objetos…'}</p>}
       {!cargando && !error && !data.items.length && (
-        <p className="empty">No hay objetos con esos filtros. Prueba con otra palabra o crea una alerta y te avisamos cuando aparezca.</p>
+        <p className="empty">{extr ? 'No hay reportes de extravío con esos filtros.' : 'No hay objetos con esos filtros. Prueba con otra palabra o crea una alerta y te avisamos cuando aparezca.'}</p>
       )}
       <div className="cards">
-        {data.items.map((h) => <ObjectCard key={h.id} h={h} />)}
+        {data.items.map((it) => (extr ? <ExtravioCard key={it.id} e={it} /> : <ObjectCard key={it.id} h={it} />))}
       </div>
 
       <div className="pager">

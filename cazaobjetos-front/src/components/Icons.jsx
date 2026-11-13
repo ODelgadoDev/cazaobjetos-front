@@ -19,3 +19,8 @@ export const IconPin = I(<><path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7
 export const IconArrowRight = I(<path d="M5 12h14M13 6l6 6-6 6" />)
 export const IconBack = I(<path d="M19 12H5M11 18l-6-6 6-6" />)
 export const IconDownload = I(<path d="M12 4v11M7 11l5 5 5-5M5 20h14" />)
+export const IconBox = I(<><path d="M3 7l9-4 9 4v10l-9 4-9-4z" /><path d="M3 7l9 4 9-4M12 11v10" /></>)
+export const IconEdit = I(<><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13.5 6.5l4 4" /></>)
+export const IconMail = I(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></>)
+export const IconLock = I(<><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></>)
+export const IconTrash = I(<><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></>)

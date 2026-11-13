@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import * as api from '../lib/api.js'
 import { ESTADOS_RECLAMO, ETAPAS } from '../lib/constants.js'
 import { useToast } from '../components/Toast.jsx'
@@ -78,7 +78,7 @@ export default function MisReclamos() {
           {data.activos.map((r) => (
             <article key={r.id} className="card">
               <div className="pager"><span className="folio">{r.folio}</span><ChipReclamo estado={r.estado} /></div>
-              <h3>{r.titulo}</h3>
+              <h3><Link to={`/reclamos/${r.id}`}>{r.titulo}</Link></h3>
               <Progreso etapa={ESTADOS_RECLAMO[r.estado].etapa} />
 
               {['enviado', 'en_revision'].includes(r.estado) && (
@@ -110,6 +110,7 @@ export default function MisReclamos() {
                   <IconX width={18} height={18} /> Cancelar reclamo
                 </button>
               )}
+              <Link className="link-green" to={`/reclamos/${r.id}`}>Ver detalle del reclamo</Link>
             </article>
           ))}
           {!data.activos.length && <p className="empty">No tienes reclamos activos. Busca tu objeto en Explorar y reclámalo.</p>}
@@ -122,7 +123,7 @@ export default function MisReclamos() {
           {data.porRevisar.map((r) => (
             <article key={r.id} className="card">
               <div className="pager"><span className="folio">{r.folio}</span><ChipReclamo estado={r.estado} /></div>
-              <h3>{r.titulo}</h3>
+              <h3><Link to={`/reclamos/${r.id}`}>{r.titulo}</Link></h3>
               <span className="mono muted" style={{ fontSize: 12 }}>
                 {r.solicitante.nombre} · <a href={`mailto:${r.solicitante.correo}`}>{r.solicitante.correo}</a>
               </span>
@@ -142,6 +143,7 @@ export default function MisReclamos() {
                 </>
               )}
               {r.estado === 'requiere_pruebas' && <div className="notice notice--pend"><span>Esperando respuesta del solicitante.</span></div>}
+              <Link className="link-green" to={`/reclamos/${r.id}`}>Ver detalle del reclamo</Link>
               {r.estado === 'aprobado' && <div className="notice notice--ok"><span>Aprobado. Coordina la entrega por correo; el solicitante cerrará el reclamo al recibirlo.</span></div>}
             </article>
           ))}
@@ -171,7 +173,7 @@ export default function MisReclamos() {
           {data.historial.map((r) => (
             <article key={r.id} className="card">
               <div className="pager"><span className="folio">{r.folio}</span><ChipReclamo estado={r.estado} /></div>
-              <h3>{r.titulo}</h3>
+              <h3><Link to={`/reclamos/${r.id}`}>{r.titulo}</Link></h3>
               {r.estado === 'rechazado' && r.observaciones && <div className="notice notice--peligro"><span>{r.observaciones}</span></div>}
               {r.entrega && (
                 <div className="metabox">

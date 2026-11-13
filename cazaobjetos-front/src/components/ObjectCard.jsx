@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Chip, ChipHallazgo } from './Chip.jsx'
+import { Chip, ChipExtravio, ChipHallazgo } from './Chip.jsx'
 import { IconArrowRight, IconCalendar, IconImage, IconPin } from './Icons.jsx'
 import { fechaCorta } from '../lib/format.js'
 
@@ -27,6 +27,26 @@ export default function ObjectCard({ h }) {
       </div>
       <Link to={`/reclamo/${h.id}`} className="btn btn--primary">
         Ver detalles / Reclamar objeto <IconArrowRight width={18} height={18} />
+      </Link>
+    </article>
+  )
+}
+
+export function ExtravioCard({ e }) {
+  return (
+    <article className="card">
+      <Foto folio={e.folio} src={e.foto} />
+      <div className="chips">
+        <Chip>{e.categoria}</Chip>
+        <ChipExtravio estado={e.estado} />
+      </div>
+      <h3>{e.titulo}</h3>
+      <div className="metabox">
+        <div><IconCalendar width={16} height={16} /> <span><span className="k">Perdido:</span> {fechaCorta(e.fecha)}</span></div>
+        <div><IconPin width={16} height={16} /> <span><span className="k">Lugar:</span> {e.lugar}</span></div>
+      </div>
+      <Link to={`/extravio/${e.id}`} className="btn btn--secondary">
+        Ver ficha <IconArrowRight width={18} height={18} />
       </Link>
     </article>
   )
