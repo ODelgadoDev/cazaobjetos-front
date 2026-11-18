@@ -18,6 +18,7 @@ export default function Registro() {
     if (f.nombre.trim().length < 3) return setError('Escribe tu nombre completo.')
     if (!correo.endsWith(DOMINIO)) return setError(`Usa tu correo institucional que termina en ${DOMINIO}.`)
     if (f.password.length < MIN_PASSWORD) return setError(`La contraseña debe tener al menos ${MIN_PASSWORD} caracteres.`)
+    if (new TextEncoder().encode(f.password).length > 72) return setError('La contraseña admite hasta 72 bytes UTF-8.')
     if (f.password !== f.confirmar) return setError('Las contraseñas no coinciden.')
     setEnviando(true)
     try {

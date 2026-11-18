@@ -51,14 +51,14 @@ export default function Explorar() {
       {extr ? (
         <div className="notice notice--info">
           <IconInfo width={20} height={20} />
-          <span className="grow">¿Encontraste uno de estos? Publícalo y su dueño recibirá una alerta.</span>
+          <span className="grow">¿Encontraste uno de estos? Publícalo para que su dueño pueda encontrarlo.</span>
           <button className="btn btn--dark" onClick={() => navigate('/reportar')}>Reportar</button>
         </div>
       ) : (
       <div className="notice notice--info">
         <IconInfo width={20} height={20} />
         <span className="grow">¿Perdiste algo y no lo ves?</span>
-        <button className="btn btn--dark" onClick={() => navigate('/reportar?tab=perdi')}>Crear alerta</button>
+        <button className="btn btn--dark" onClick={() => navigate('/reportar?tab=perdi')}>Reportar extravío</button>
       </div>
       )}
 
@@ -103,7 +103,7 @@ export default function Explorar() {
       {error && <div className="notice notice--peligro" role="alert">{error}</div>}
       {cargando && !data.items.length && <p className="empty">{extr ? 'Cargando reportes…' : 'Cargando objetos…'}</p>}
       {!cargando && !error && !data.items.length && (
-        <p className="empty">{extr ? 'No hay reportes de extravío con esos filtros.' : 'No hay objetos con esos filtros. Prueba con otra palabra o crea una alerta y te avisamos cuando aparezca.'}</p>
+        <p className="empty">{extr ? 'No hay reportes de extravío con esos filtros.' : 'No hay objetos con esos filtros. Prueba con otra palabra o publica un reporte de extravío.'}</p>
       )}
       <div className="cards">
         {data.items.map((it) => (extr ? <ExtravioCard key={it.id} e={it} /> : <ObjectCard key={it.id} h={it} />))}

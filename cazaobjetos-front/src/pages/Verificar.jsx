@@ -22,7 +22,7 @@ export default function Verificar() {
   const [correo, setCorreo] = useState(state?.correo ?? '')
   const [codigo, setCodigo] = useState('')
   const [error, setError] = useState('')
-  const [aviso, setAviso] = useState(state?.recienCreada ? `Cuenta creada. Enviamos un código de 6 dígitos a ${state.correo}.` : '')
+  const [aviso, setAviso] = useState(state?.recienCreada ? `Cuenta creada. Enviamos un código de verificación a ${state.correo}.` : '')
   const [enviando, setEnviando] = useState(false)
   const [espera, iniciarEspera] = useCuentaAtras()
 
@@ -34,7 +34,7 @@ export default function Verificar() {
     e.preventDefault()
     setError('')
     if (!correoOk) return setError(`Escribe tu correo institucional ${DOMINIO}.`)
-    if (!/^\d{6}$/.test(codigo)) return setError('El código tiene 6 dígitos.')
+    if (!(USE_MOCK ? /^\d{6}$/ : /^[A-Za-z0-9_-]{43}$/).test(codigo.trim())) return setError('Copia el código completo recibido por correo.')
     setEnviando(true)
     try {
       await verificarCorreo(correo.trim().toLowerCase(), codigo)
@@ -79,10 +79,10 @@ export default function Verificar() {
 export function CampoCodigo({ id, value, onChange }) {
   return (
     <div className="field">
-      <label htmlFor={id}>Código de 6 dígitos</label>
+      <label htmlFor={id}>{USE_MOCK ? 'Código de 6 dígitos' : 'Código de verificación'}</label>
       <input
-        id={id} className="input mono code-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000"
-        value={value} onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
+        id={id} className="input mono code-input" inputMode={USE_MOCK ? "numeric" : "text"} autoComplete="one-time-code" maxLength={USE_MOCK ? 6 : 43} placeholder={USE_MOCK ? "000000" : "Pega el código completo del correo"}
+        value={value} onChange={(e) => onChange(USE_MOCK ? e.target.value.replace(/\D/g, '').slice(0, 6) : e.target.value.trim())}
       />
     </div>
   )

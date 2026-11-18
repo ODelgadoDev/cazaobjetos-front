@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { crearExtravio, crearHallazgo, listDelegados } from '../lib/api.js'
+import { USE_MOCK, crearExtravio, crearHallazgo, listDelegados } from '../lib/api.js'
 import { useToast } from '../components/Toast.jsx'
 import { CASETAS, CATEGORIAS } from '../lib/constants.js'
 import { ahoraHora, hoyISO } from '../lib/format.js'
@@ -24,6 +24,7 @@ function Categorias({ value, onChange }) {
 export function FormEncontre({ edicion }) {
   const navigate = useNavigate()
   const toast = useToast()
+  const requestKey = useRef(crypto.randomUUID())
   const [f, setF] = useState(() => ({ titulo: '', categoria: 'Electrónica', lugar: '', fecha: hoyISO(), hora: ahoraHora(), descripcion: '', gestion: 'yo', delegadoId: '', enOficina: false, caseta: CASETAS[0], ...edicion?.inicial }))
   const [delegados, setDelegados] = useState([])
   useEffect(() => { if (!edicion) listDelegados().then(setDelegados).catch(() => {}) }, [edicion])
@@ -36,7 +37,8 @@ export function FormEncontre({ edicion }) {
   function onFoto(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!file.type.startsWith('image/')) return setError('Sube una imagen JPG o PNG.')
+    if (!['image/jpeg', 'image/png'].includes(file.type)) return setError('Sube una imagen JPG o PNG.')
+    if (file.size > 5 * 1024 * 1024) return setError('La imagen pesa más de 5 MB.')
     setError('')
     setFoto(file)
     const r = new FileReader()
@@ -44,11 +46,11 @@ export function FormEncontre({ edicion }) {
     r.readAsDataURL(file)
   }
 
-  const valido = f.titulo.trim() && f.lugar.trim() && f.fecha && (edicion || ((f.gestion === 'yo' || f.delegadoId) && (!f.enOficina || f.caseta)))
+  const valido = f.titulo.trim() && f.lugar.trim() && f.descripcion.trim() && f.fecha && (edicion || ((f.gestion === 'yo' || f.delegadoId) && (!f.enOficina || f.caseta)))
 
   async function enviar(e) {
     e.preventDefault()
-    if (!valido) return setError(edicion ? 'Completa el nombre, el lugar y la fecha.' : 'Completa el nombre, el lugar, la fecha y quién gestionará la devolución.')
+    if (!valido) return setError(edicion ? 'Completa el nombre, el lugar y la fecha.' : 'Completa el nombre, la descripción, el lugar, la fecha y quién gestionará la devolución.')
     setEnviando(true)
     setError('')
     if (edicion) {
@@ -57,9 +59,9 @@ export function FormEncontre({ edicion }) {
       return
     }
     try {
-      const h = await crearHallazgo({ ...f, foto, fotoPreview: preview })
-      toast(`Hallazgo publicado. Folio ${h.folio}`)
-      navigate('/?tab=encontrados')
+      const h = await crearHallazgo({ ...f, foto, fotoPreview: preview, requestKey: requestKey.current })
+      toast(h.aviso || `Hallazgo publicado. Folio ${h.folio}`)
+      navigate(h.aviso ? '/publicaciones' : '/?tab=encontrados')
     } catch (err) {
       setError(err.message)
       setEnviando(false)
@@ -72,14 +74,14 @@ export function FormEncontre({ edicion }) {
         {preview ? <img src={preview} alt="Vista previa del objeto" /> : <IconImage width={28} height={28} />}
         <strong>Tomar o subir foto del objeto</strong>
         <span className="muted">Evita mostrar datos personales</span>
-        <input type="file" accept="image/*" capture="environment" onChange={onFoto} aria-label="Foto del objeto" />
+        <input type="file" accept="image/jpeg,image/png" onChange={onFoto} aria-label="Foto del objeto" />
       </label>}
       <div className="field"><label htmlFor="titulo">Nombre del objeto</label><input id="titulo" className="input" placeholder="ej. Calculadora Casio fx-991" value={f.titulo} onChange={set('titulo')} /></div>
       <div className="field"><span className="label">Categoría</span><Categorias value={f.categoria} onChange={(c) => setF({ ...f, categoria: c })} /></div>
       <div className="field"><label htmlFor="lugar">¿Dónde lo encontraste?</label><input id="lugar" className="input" placeholder="ej. Biblioteca piso 2, Mesa 14" value={f.lugar} onChange={set('lugar')} /></div>
       <div className="row2">
         <div className="field"><label htmlFor="fecha">Fecha</label><input id="fecha" type="date" className="input mono" max={hoyISO()} value={f.fecha} onChange={set('fecha')} /></div>
-        <div className="field"><label htmlFor="hora">Hora</label><input id="hora" type="time" className="input mono" value={f.hora} onChange={set('hora')} /></div>
+        {USE_MOCK && <div className="field"><label htmlFor="hora">Hora</label><input id="hora" type="time" className="input mono" value={f.hora} onChange={set('hora')} /></div>}
       </div>
       {!edicion && <>
       <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
@@ -111,7 +113,7 @@ export function FormEncontre({ edicion }) {
       ) : (
         <>
           <button className="btn btn--primary" disabled={enviando}><IconSend width={18} height={18} /> {enviando ? 'Publicando…' : 'Publicar hallazgo'}</button>
-          <p className="help" style={{ textAlign: 'center', margin: 0 }}>SE GENERARÁ UN FOLIO #UTCH-AAAA-NNNN</p>
+          <p className="help" style={{ textAlign: 'center', margin: 0 }}>SE GENERARÁ UN IDENTIFICADOR DE PUBLICACIÓN</p>
         </>
       )}
     </form>
@@ -122,6 +124,7 @@ export function FormEncontre({ edicion }) {
 export function FormPerdi({ edicion }) {
   const navigate = useNavigate()
   const toast = useToast()
+  const requestKey = useRef(crypto.randomUUID())
   const [f, setF] = useState(() => ({ titulo: '', categoria: 'Electrónica', lugar: '', fecha: hoyISO(), descripcion: '', alertas: true, ...edicion?.inicial }))
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -129,7 +132,7 @@ export function FormPerdi({ edicion }) {
 
   async function enviar(e) {
     e.preventDefault()
-    if (!f.titulo.trim() || !f.lugar.trim()) return setError('Escribe qué perdiste y dónde crees que fue.')
+    if (!f.titulo.trim() || !f.lugar.trim() || !f.descripcion.trim()) return setError('Escribe qué perdiste, su descripción y dónde crees que fue.')
     setEnviando(true)
     setError('')
     if (edicion) {
@@ -138,8 +141,8 @@ export function FormPerdi({ edicion }) {
       return
     }
     try {
-      await crearExtravio(f)
-      toast('Reporte creado. Te avisaremos si aparece algo parecido.')
+      await crearExtravio({ ...f, requestKey: requestKey.current })
+      toast('Reporte de extravío creado.')
       navigate('/publicaciones?tab=extravios')
     } catch (err) {
       setError(err.message)
@@ -154,10 +157,10 @@ export function FormPerdi({ edicion }) {
       <div className="field"><label htmlFor="p-lugar">¿Dónde crees que lo perdiste?</label><input id="p-lugar" className="input" placeholder="ej. Salón 12, Edif. C" value={f.lugar} onChange={set('lugar')} /></div>
       <div className="field"><label htmlFor="p-fecha">Fecha aproximada</label><input id="p-fecha" type="date" className="input mono" max={hoyISO()} value={f.fecha} onChange={set('fecha')} /></div>
       <div className="field"><label htmlFor="p-desc">Descripción</label><textarea id="p-desc" className="textarea" placeholder="Color, marca, señas particulares…" value={f.descripcion} onChange={set('descripcion')} /></div>
-      <label className="check">
+      {USE_MOCK && <label className="check">
         <input type="checkbox" checked={f.alertas} onChange={(e) => setF({ ...f, alertas: e.target.checked })} />
         <span>Avísame por correo cuando aparezca un objeto parecido.</span>
-      </label>
+      </label>}
       {error && <div className="notice notice--peligro" role="alert">{error}</div>}
       {edicion
         ? <button className="btn btn--primary" disabled={enviando}>{enviando ? 'Guardando…' : 'Guardar cambios'}</button>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 import { getExtravio, marcarExtravioRecuperado } from '../lib/api.js'
 import { useToast } from '../components/Toast.jsx'
 import { Chip, ChipExtravio } from '../components/Chip.jsx'
@@ -9,6 +10,7 @@ import { fechaCorta } from '../lib/format.js'
 
 export default function DetalleExtravio() {
   const { id } = useParams()
+  const { usuario } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
   const [e, setE] = useState(null)
@@ -25,7 +27,7 @@ export default function DetalleExtravio() {
   if (error && !e) return <div className="notice notice--peligro" role="alert">{error}</div>
   if (!e) return <p className="empty">Cargando reporte…</p>
   const p = e.permisos || {}
-  const mio = p.editar || p.marcarRecuperado
+  const mio = e.autor?.id === usuario?.id
 
   return (
     <>
@@ -53,6 +55,7 @@ export default function DetalleExtravio() {
       {mio ? (
         <section className="card">
           <h2 className="section-title">Tu reporte</h2>
+          {e.estado === 'activo' && !p.editar && <p>Hay un reclamo vinculado en curso. Revísalo en Mis reclamos.</p>}
           {p.marcarRecuperado && <button className="btn btn--primary" onClick={recuperado}><IconCheck width={18} height={18} /> Ya lo recuperé</button>}
           {p.editar && <Link className="btn btn--secondary" to={`/editar/extravio/${e.id}`}><IconEdit width={18} height={18} /> Editar reporte</Link>}
         </section>
@@ -60,12 +63,12 @@ export default function DetalleExtravio() {
         <section className="card">
           <div className="notice notice--info">
             <IconInfo width={20} height={20} />
-            <span>¿Lo encontraste? Publícalo como hallazgo. Su dueño recibirá una alerta y podrá reclamarlo con datos que solo él conoce.</span>
+            <span>¿Lo encontraste? Publícalo como hallazgo. Su dueño podrá encontrarlo y reclamarlo con datos que solo él conoce.</span>
           </div>
           <button className="btn btn--primary" onClick={() => navigate('/reportar')}><IconSend width={18} height={18} /> Reportar que lo encontré</button>
         </section>
       ) : (
-        <div className="notice notice--ok"><span>Este objeto ya fue recuperado por su dueño.</span></div>
+        <div className="notice notice--ok"><span>{e.estado === 'retirado' ? 'Esta publicación fue retirada.' : 'Este objeto ya fue recuperado por su dueño.'}</span></div>
       )}
     </>
   )

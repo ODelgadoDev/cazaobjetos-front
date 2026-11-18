@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { crearReclamo, getHallazgo, reportarInformacionIncorrecta } from '../lib/api.js'
+import { USE_MOCK, crearReclamo, getHallazgo, misPublicaciones, reportarInformacionIncorrecta } from '../lib/api.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { ChipHallazgo } from '../components/Chip.jsx'
@@ -17,6 +17,9 @@ export default function Reclamo() {
   const navigate = useNavigate()
   const toast = useToast()
   const { usuario } = useAuth()
+  const requestKey = useRef(crypto.randomUUID())
+  const [losses, setLosses] = useState([])
+  const [lostReportId, setLostReportId] = useState('')
   const [h, setH] = useState(null)
   const [error, setError] = useState('')
   const [detalles, setDetalles] = useState('')
@@ -29,10 +32,13 @@ export default function Reclamo() {
     getHallazgo(id).then(setH).catch((e) => setError(e.message))
   }, [id])
 
+  useEffect(() => { if (!USE_MOCK) misPublicaciones().then((data) => setLosses(data.extravios.filter((loss) => loss.estado === 'activo' && loss.permisos.editar))).catch((error) => setError(error.message)) }, [])
+
   const detallesOk = detalles.trim().length >= MIN
   const paso = detallesOk ? 3 : detalles.length > 0 ? 2 : 1
-  const propio = h && h.gestor?.id === usuario.id
-  const puedeEnviar = detallesOk && declaro && !enviando && !propio
+  const propio = h && (h.gestor?.id === usuario.id || h.autor?.id === usuario.id)
+  const disponible = USE_MOCK || h?.puedeReclamar
+  const puedeEnviar = detallesOk && declaro && !enviando && !propio && disponible
 
   function onArchivo(e) {
     const f = e.target.files?.[0]
@@ -47,7 +53,7 @@ export default function Reclamo() {
     setEnviando(true)
     setError('')
     try {
-      await crearReclamo({ hallazgoId: h.id, descripcionPrivada: detalles.trim(), declaracion: declaro, evidencia: archivo })
+      await crearReclamo({ hallazgoId: h.id, descripcionPrivada: detalles.trim(), declaracion: declaro, evidencia: archivo, lostReportId, requestKey: requestKey.current })
       toast('Solicitud enviada. El responsable te escribirá a tu correo institucional.')
       navigate('/reclamos')
     } catch (e) {
@@ -73,6 +79,7 @@ export default function Reclamo() {
       </div>
 
       <Foto src={h.foto} />
+      {h.fotos?.length > 1 && <div className="fotos">{h.fotos.slice(1).map((foto, index) => <figure className="fotos__item" key={foto.id}><img src={foto.url} alt={`Foto ${index + 2}`} /></figure>)}</div>}
 
       <section className="card">
         <span className="folio">FOLIO {h.folio}</span>
@@ -84,9 +91,10 @@ export default function Reclamo() {
           <div><span className="k">RESGUARDO</span> {h.custodia ?? 'Con quien lo encontró'}</div>
           <div><span className="k">GESTIONA</span> {h.gestor?.nombre}</div>
         </div>
+        {h.descripcionPublica && <p>{h.descripcionPublica}</p>}
       </section>
 
-      <section className="card">
+      {disponible && <section className="card">
         <h2 className="section-title"><IconShield width={20} height={20} /> Proceso de reclamo</h2>
         <div className="notice notice--info">
           <IconInfo width={20} height={20} />
@@ -94,6 +102,7 @@ export default function Reclamo() {
         </div>
         {propio && <div className="notice notice--pend"><span>Tú gestionas este objeto, así que no puedes reclamarlo.</span></div>}
 
+        {losses.length > 0 && <div className="field"><label htmlFor="linked-loss">Vincular con un extravío mío (opcional)</label><select id="linked-loss" className="select" value={lostReportId} onChange={(event) => setLostReportId(event.target.value)}><option value="">Sin vincular</option>{losses.map((loss) => <option key={loss.id} value={loss.id}>{loss.titulo}</option>)}</select></div>}
         <div className="field">
           <label htmlFor="detalles">
             Detalles que prueban que es tuyo <span className="chip chip--req">Obligatorio</span>
@@ -104,7 +113,7 @@ export default function Reclamo() {
           </span>
         </div>
 
-        <div className="field">
+        {USE_MOCK && <div className="field">
           <span className="label">Comprobante o evidencia <span className="help">(opcional)</span></span>
           <label className="dropzone">
             <IconUpload width={24} height={24} />
@@ -113,14 +122,14 @@ export default function Reclamo() {
             <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={onArchivo} aria-label="Adjuntar evidencia" />
           </label>
           {errArchivo && <span className="help help--error" role="alert">{errArchivo}</span>}
-        </div>
+        </div>}
 
         <div className="field">
           <span className="label">Identificación institucional</span>
           <div className="notice notice--ok">
             <IconCheck width={20} height={20} />
             <span className="mono" style={{ fontSize: 13 }}>
-              {usuario.matricula ?? 'Sin matrícula'} · {usuario.nombre} · SSO UTCH
+              {usuario.correo} · {usuario.nombre}
             </span>
           </div>
         </div>
@@ -135,10 +144,8 @@ export default function Reclamo() {
         <button className="btn btn--primary" disabled={!puedeEnviar} onClick={enviar}>
           <IconSend width={18} height={18} /> {enviando ? 'Enviando…' : 'Enviar solicitud de reclamo'}
         </button>
-        <button className="btn btn--secondary" onClick={reportarIncorrecta}>Reportar como información incorrecta</button>
-      </section>
-
-      <p className="help" style={{ textAlign: 'center' }}>EXPEDIENTE VIGENTE: 30 DÍAS</p>
+        {USE_MOCK && <button className="btn btn--secondary" onClick={reportarIncorrecta}>Reportar como información incorrecta</button>}
+      </section>}
     </>
   )
 }

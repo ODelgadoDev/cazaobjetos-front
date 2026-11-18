@@ -3,7 +3,7 @@ import { agregarFoto, eliminarFoto } from '../lib/api.js'
 import { useToast } from './Toast.jsx'
 import { IconImage, IconTrash } from './Icons.jsx'
 
-const MAX_FOTOS = 4
+const MAX_FOTOS = 3
 const MAX_MB = 5
 
 /** Agrega o quita fotos de una publicación ya creada. tipo: 'hallazgos' | 'extravios'. */
@@ -18,7 +18,7 @@ export default function FotosEditor({ tipo, id, fotos: iniciales = [] }) {
     e.target.value = ''
     if (!file) return
     setError('')
-    if (!file.type.startsWith('image/')) return setError('Sube una imagen JPG o PNG.')
+    if (!['image/jpeg', 'image/png'].includes(file.type)) return setError('Sube una imagen JPG o PNG.')
     if (file.size > MAX_MB * 1024 * 1024) return setError(`La imagen pesa más de ${MAX_MB} MB.`)
     setOcupado(true)
     try {
@@ -56,7 +56,7 @@ export default function FotosEditor({ tipo, id, fotos: iniciales = [] }) {
           <label className="dropzone fotos__nueva">
             <IconImage width={24} height={24} />
             <strong>{ocupado ? 'Subiendo…' : 'Agregar foto'}</strong>
-            <input type="file" accept="image/*" onChange={subir} disabled={ocupado} aria-label="Agregar foto" />
+            <input type="file" accept="image/jpeg,image/png" onChange={subir} disabled={ocupado} aria-label="Agregar foto" />
           </label>
         )}
       </div>

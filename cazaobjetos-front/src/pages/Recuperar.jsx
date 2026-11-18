@@ -26,7 +26,7 @@ export default function Recuperar() {
     setEnviando(true)
     try {
       await solicitarRecuperacion(c)
-      setAviso(`Si ${c} tiene cuenta, recibirás un código de 6 dígitos.`)
+      setAviso(`Si ${c} tiene cuenta, recibirás un código de recuperación.`)
       setPaso(2)
       iniciarEspera()
     } catch (err) { setError(err.message) } finally { setEnviando(false) }
@@ -35,8 +35,9 @@ export default function Recuperar() {
   async function restablecer(e) {
     e.preventDefault()
     setError('')
-    if (!/^\d{6}$/.test(codigo)) return setError('El código tiene 6 dígitos.')
+    if (!(USE_MOCK ? /^\d{6}$/ : /^[A-Za-z0-9_-]{43}$/).test(codigo.trim())) return setError('Copia el código completo recibido por correo.')
     if (password.length < MIN_PASSWORD) return setError(`La contraseña debe tener al menos ${MIN_PASSWORD} caracteres.`)
+    if (new TextEncoder().encode(password).length > 72) return setError('La contraseña admite hasta 72 bytes UTF-8.')
     if (password !== confirmar) return setError('Las contraseñas no coinciden.')
     setEnviando(true)
     try {

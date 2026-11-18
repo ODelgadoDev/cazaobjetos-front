@@ -18,7 +18,8 @@ import MiCuenta from './pages/MiCuenta.jsx'
 import Vigilancia from './pages/Vigilancia.jsx'
 
 export default function App() {
-  const { usuario } = useAuth()
+  const { usuario, cargando, esStaff } = useAuth()
+  if (cargando) return <p className="empty">Comprobando sesión…</p>
 
   return (
     <ToastProvider>
@@ -34,7 +35,7 @@ export default function App() {
             <Route path="/editar/:tipo/:id" element={<EditarPublicacion />} />
             <Route path="/extravio/:id" element={<DetalleExtravio />} />
             <Route path="/cuenta" element={<MiCuenta />} />
-            <Route path="/vigilancia" element={<Vigilancia />} />
+            {esStaff && <Route path="/vigilancia" element={<Vigilancia />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

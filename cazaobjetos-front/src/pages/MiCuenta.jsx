@@ -19,6 +19,7 @@ function CambiarPassword() {
     setError('')
     if (!f.actual) return setError('Escribe tu contraseña actual.')
     if (f.nueva.length < MIN_PASSWORD) return setError(`La nueva contraseña debe tener al menos ${MIN_PASSWORD} caracteres.`)
+    if (new TextEncoder().encode(f.nueva).length > 72) return setError('La contraseña admite hasta 72 bytes UTF-8.')
     if (f.nueva === f.actual) return setError('La nueva contraseña debe ser distinta de la actual.')
     if (f.nueva !== f.confirmar) return setError('Las contraseñas nuevas no coinciden.')
     setEnviando(true)

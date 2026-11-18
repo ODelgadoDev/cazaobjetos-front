@@ -82,7 +82,7 @@ function HallazgoItem({ h, delegados, run }) {
         </div>
       )}
       {!p.editar && !p.dejarEnOficina && !p.delegar && !p.retirar && (
-        <p className="help" style={{ margin: 0 }}>{h.estado === 'entregado' ? 'OBJETO ENTREGADO · SIN ACCIONES' : 'HAY UN RECLAMO EN CURSO · REVÍSALO EN MIS RECLAMOS'}</p>
+        <p className="help" style={{ margin: 0 }}>{h.estado === 'retirado' ? 'PUBLICACIÓN RETIRADA' : h.estado === 'entregado' ? 'OBJETO ENTREGADO · SIN ACCIONES' : 'SIN ACCIONES DISPONIBLES PARA TU CUENTA EN ESTE ESTADO'}</p>
       )}
     </article>
   )
@@ -107,7 +107,7 @@ function ExtravioItem({ e, run }) {
         )}
         {p.editar && <Link className="btn btn--secondary" to={`/editar/extravio/${e.id}`}><IconEdit width={18} height={18} /> Editar</Link>}
         {p.retirar && (
-          <button className="btn btn--link-danger" onClick={() => { if (window.confirm(`¿Retirar el reporte ${e.folio}? Ya no recibirás alertas.`)) run(() => api.retirarExtravio(e.id), 'Reporte retirado.') }}>
+          <button className="btn btn--link-danger" onClick={() => { if (window.confirm(`¿Retirar el reporte ${e.folio}? Dejará de verse en Explorar.`)) run(() => api.retirarExtravio(e.id), 'Reporte retirado.') }}>
             <IconTrash width={18} height={18} /> Retirar reporte
           </button>
         )}
@@ -141,7 +141,7 @@ export default function MisPublicaciones() {
   const vacio = {
     hallazgos: 'Aún no has publicado hallazgos. Si encuentras algo, repórtalo para que su dueño lo encuentre.',
     delegados: 'Nadie te ha delegado objetos. Aquí verás los hallazgos cuya devolución gestionas por encargo.',
-    extravios: 'No tienes reportes de extravío. Si pierdes algo, crea uno y te avisamos si aparece.',
+    extravios: 'No tienes reportes de extravío. Si pierdes algo, crea uno para que puedan identificarlo.',
   }[tab]
 
   return (

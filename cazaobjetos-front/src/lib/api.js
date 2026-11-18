@@ -6,6 +6,7 @@
  * - Con VITE_API_URL -> back real. Los endpoints son el CONTRATO PROPUESTO:
  *   acuérdenlo con quien hace el back y ajusten solo este archivo.
  */
+import * as real from './realApi.js'
 import { seed } from './mockData.js'
 import { ESTADOS_ACTIVOS, ESTADOS_CERRADOS } from './constants.js'
 
@@ -18,24 +19,7 @@ export const setToken = (t) => {
   token = t
   t ? sessionStorage.setItem('co_token', t) : sessionStorage.removeItem('co_token')
 }
-export const setUsuario = (u) => { yo = u }
-
-async function http(method, path, body, isForm = false) {
-  const headers = {}
-  if (token) headers.Authorization = `Bearer ${token}`
-  if (body && !isForm) headers['Content-Type'] = 'application/json'
-  const res = await fetch(`${BASE}${path}`, { method, headers, body: body ? (isForm ? body : JSON.stringify(body)) : undefined })
-  if (!res.ok) {
-    let cuerpo = {}
-    try { cuerpo = await res.json() } catch {}
-    const err = new Error(cuerpo.message || 'Ocurrió un error. Intenta de nuevo.')
-    err.status = res.status
-    err.code = cuerpo.code // p. ej. 'CORREO_NO_VERIFICADO'
-    throw err
-  }
-  if (res.status === 204) return null
-  return (res.headers.get('content-type') || '').includes('json') ? res.json() : res.text()
-}
+export const setUsuario = (u) => { yo = u; real.setUsuario(u) }
 
 // ---------- Mock ----------
 const db = structuredClone(seed)
@@ -82,7 +66,7 @@ function permisosExtravio(e) {
 
 // ---------- Auth ----------
 export async function login(email, password) {
-  if (!USE_MOCK) return http('POST', '/auth/login', { email, password })
+  if (!USE_MOCK) return real.login(email, password)
   const correo = email.trim().toLowerCase()
   if (db.pendientes[correo]) return fail('Tu correo aún no está verificado. Ingresa el código que te enviamos.', 'CORREO_NO_VERIFICADO')
   const u = db.usuarios[correo]
@@ -93,7 +77,7 @@ export async function login(email, password) {
 
 // data: { nombre, correo, password } -> el back envía un código al correo
 export async function registrar({ nombre, correo, password }) {
-  if (!USE_MOCK) return http('POST', '/auth/registro', { nombre, correo, password })
+  if (!USE_MOCK) return real.registrar({ nombre, correo, password })
   const c = correo.trim().toLowerCase()
   if (db.usuarios[c] || db.pendientes[c]) return fail('Ya existe una cuenta con ese correo. Inicia sesión o recupera tu contraseña.')
   const id = nextId++
@@ -103,7 +87,7 @@ export async function registrar({ nombre, correo, password }) {
 }
 
 export async function verificarCorreo(correo, codigo) {
-  if (!USE_MOCK) return http('POST', '/auth/verificar', { correo, codigo })
+  if (!USE_MOCK) return real.verificarCorreo(correo, codigo)
   const c = correo.trim().toLowerCase()
   if (!db.pendientes[c]) return fail(db.usuarios[c] ? 'Este correo ya está verificado. Inicia sesión.' : 'No hay un registro pendiente con ese correo.')
   if (codigo !== CODIGO_MOCK) return fail('El código no es correcto o ya expiró.')
@@ -113,18 +97,18 @@ export async function verificarCorreo(correo, codigo) {
 }
 
 export async function reenviarCodigo(correo) {
-  if (!USE_MOCK) return http('POST', '/auth/verificar/reenviar', { correo })
+  if (!USE_MOCK) return real.reenviarCodigo(correo)
   return wait({ ok: true })
 }
 
 // Recuperar contraseña: 1) pedir código  2) usarlo para poner una nueva
 export async function solicitarRecuperacion(correo) {
-  if (!USE_MOCK) return http('POST', '/auth/recuperar', { correo })
+  if (!USE_MOCK) return real.solicitarRecuperacion(correo)
   return wait({ ok: true }) // siempre ok: no revelamos si el correo existe
 }
 
 export async function restablecerPassword({ correo, codigo, password }) {
-  if (!USE_MOCK) return http('POST', '/auth/recuperar/confirmar', { correo, codigo, password })
+  if (!USE_MOCK) return real.restablecerPassword({ correo, codigo, password })
   if (codigo !== CODIGO_MOCK) return fail('El código no es correcto o ya expiró.')
   db.passwords[correo.trim().toLowerCase()] = password
   return wait({ ok: true })
@@ -132,12 +116,12 @@ export async function restablecerPassword({ correo, codigo, password }) {
 
 // ---------- Mi cuenta ----------
 export async function getPerfil() {
-  if (!USE_MOCK) return http('GET', '/usuarios/yo')
+  if (!USE_MOCK) return real.getPerfil()
   return wait(yo)
 }
 
 export async function cambiarPassword({ actual, nueva }) {
-  if (!USE_MOCK) return http('POST', '/usuarios/yo/password', { actual, nueva })
+  if (!USE_MOCK) return real.cambiarPassword({ actual, nueva })
   if (db.passwords[yo.correo] && db.passwords[yo.correo] !== actual) return fail('La contraseña actual no es correcta.')
   db.passwords[yo.correo] = nueva
   return wait({ ok: true })
@@ -145,7 +129,7 @@ export async function cambiarPassword({ actual, nueva }) {
 
 // ---------- Hallazgos ----------
 export async function listHallazgos({ q = '', categoria = 'Todos', zona = 'Todos', orden = 'recientes', page = 1, pageSize = 5 } = {}) {
-  if (!USE_MOCK) return http('GET', `/hallazgos?${new URLSearchParams({ q, categoria, zona, orden, page, pageSize })}`) // -> { items, total }
+  if (!USE_MOCK) return real.listHallazgos({ q, categoria, zona, orden, page, pageSize })
   let items = db.hallazgos.filter((h) => h.estado !== 'entregado')
   if (q) items = items.filter((h) => (h.titulo + h.lugar + h.categoria).toLowerCase().includes(q.toLowerCase()))
   if (categoria !== 'Todos') items = items.filter((h) => h.categoria === categoria)
@@ -155,14 +139,14 @@ export async function listHallazgos({ q = '', categoria = 'Todos', zona = 'Todos
 }
 
 export async function getHallazgo(id) {
-  if (!USE_MOCK) return http('GET', `/hallazgos/${id}`)
+  if (!USE_MOCK) return real.getHallazgo(id)
   const h = db.hallazgos.find((x) => x.id === Number(id))
   return h ? wait({ ...h, permisos: permisosHallazgo(h) }) : fail('No encontramos ese objeto.')
 }
 
 // Responsables posibles al delegar: docentes o secretaría
 export async function listDelegados() {
-  if (!USE_MOCK) return http('GET', '/usuarios/delegados')
+  if (!USE_MOCK) return real.listDelegados()
   return wait(db.delegados)
 }
 
@@ -171,12 +155,7 @@ export async function listDelegados() {
  *         gestion: 'yo' | 'delegar', delegadoId, enOficina: bool, caseta }
  */
 export async function crearHallazgo(data) {
-  if (!USE_MOCK) {
-    const f = new FormData()
-    const { fotoPreview, ...resto } = data
-    Object.entries(resto).forEach(([k, v]) => v != null && f.append(k, v))
-    return http('POST', '/hallazgos', f, true)
-  }
+  if (!USE_MOCK) return real.crearHallazgo(data)
   const gestor = data.gestion === 'yo' ? { id: yo.id, nombre: yo.nombre, correo: yo.correo } : db.delegados.find((d) => d.id === Number(data.delegadoId))
   const id = nextId++
   const h = {
@@ -193,7 +172,7 @@ export async function crearHallazgo(data) {
 
 // "Lo dejé en oficina": actualiza el lugar de resguardo
 export async function marcarEnOficina(id, caseta) {
-  if (!USE_MOCK) return http('POST', `/hallazgos/${id}/resguardo`, { caseta })
+  if (!USE_MOCK) return real.marcarEnOficina(id, caseta)
   const h = db.hallazgos.find((x) => x.id === Number(id))
   h.resguardo = 'oficina'; h.custodia = caseta
   if (h.estado === 'con_finder') h.estado = 'bajo_custodia'
@@ -202,7 +181,7 @@ export async function marcarEnOficina(id, caseta) {
 
 // Delegar la gestión de un hallazgo a un docente o a la secretaría
 export async function delegarHallazgo(id, delegadoId) {
-  if (!USE_MOCK) return http('POST', `/hallazgos/${id}/delegar`, { delegadoId })
+  if (!USE_MOCK) return real.delegarHallazgo(id, delegadoId)
   const h = db.hallazgos.find((x) => x.id === Number(id))
   const d = db.delegados.find((x) => x.id === Number(delegadoId))
   if (!d) return fail('Elige a quién delegar.')
@@ -213,7 +192,7 @@ export async function delegarHallazgo(id, delegadoId) {
 // ---------- Extravíos ----------
 // data: { titulo, categoria, lugar, fecha, descripcion, alertas }
 export async function crearExtravio(data) {
-  if (!USE_MOCK) return http('POST', '/extravios', data)
+  if (!USE_MOCK) return real.crearExtravio(data)
   const id = nextId++
   const e = {
     id, folio: `#EXT-${id}`, titulo: data.titulo, categoria: data.categoria, estado: 'activo', autor: persona(yo),
@@ -225,7 +204,7 @@ export async function crearExtravio(data) {
 
 // -> { items, total }. estado: 'activo' | 'recuperado' | 'Todos'
 export async function listExtravios({ q = '', categoria = 'Todos', zona = 'Todos', orden = 'recientes', estado = 'activo', page = 1, pageSize = 5 } = {}) {
-  if (!USE_MOCK) return http('GET', `/extravios?${new URLSearchParams({ q, categoria, zona, orden, estado, page, pageSize })}`)
+  if (!USE_MOCK) return real.listExtravios({ q, categoria, zona, orden, estado, page, pageSize })
   let items = db.extravios.filter((e) => estado === 'Todos' || e.estado === estado)
   if (q) items = items.filter((e) => (e.titulo + e.lugar + e.categoria + (e.descripcion || '')).toLowerCase().includes(q.toLowerCase()))
   if (categoria !== 'Todos') items = items.filter((e) => e.categoria === categoria)
@@ -235,13 +214,13 @@ export async function listExtravios({ q = '', categoria = 'Todos', zona = 'Todos
 }
 
 export async function getExtravio(id) {
-  if (!USE_MOCK) return http('GET', `/extravios/${id}`)
+  if (!USE_MOCK) return real.getExtravio(id)
   const e = extravio(id)
   return e ? wait({ ...e, permisos: permisosExtravio(e) }) : fail('No encontramos ese reporte de extravío.')
 }
 
 export async function editarExtravio(id, cambios) {
-  if (!USE_MOCK) return http('PATCH', `/extravios/${id}`, cambios)
+  if (!USE_MOCK) return real.editarExtravio(id, cambios)
   const e = extravio(id)
   const { fecha, hora, ...resto } = cambios
   Object.assign(e, resto, fecha ? { fecha: aISO(fecha, hora) } : {})
@@ -249,13 +228,13 @@ export async function editarExtravio(id, cambios) {
 }
 
 export async function retirarExtravio(id) {
-  if (!USE_MOCK) return http('DELETE', `/extravios/${id}`)
+  if (!USE_MOCK) return real.retirarExtravio(id)
   db.extravios = db.extravios.filter((e) => e.id !== Number(id))
   return wait({ ok: true })
 }
 
 export async function marcarExtravioRecuperado(id) {
-  if (!USE_MOCK) return http('POST', `/extravios/${id}/recuperado`)
+  if (!USE_MOCK) return real.marcarExtravioRecuperado(id)
   extravio(id).estado = 'recuperado'
   return wait({ ok: true })
 }
@@ -263,7 +242,7 @@ export async function marcarExtravioRecuperado(id) {
 // ---------- Mis publicaciones ----------
 // -> { hallazgos, delegados, extravios }, cada item con `permisos`
 export async function misPublicaciones() {
-  if (!USE_MOCK) return http('GET', '/publicaciones/mias')
+  if (!USE_MOCK) return real.misPublicaciones()
   const conP = (h) => ({ ...h, permisos: permisosHallazgo(h) })
   return wait({
     hallazgos: db.hallazgos.filter((h) => h.autor?.id === yo.id).map(conP),
@@ -275,11 +254,7 @@ export async function misPublicaciones() {
 // ---------- Fotos de una publicación ----------
 // tipo: 'hallazgos' | 'extravios'
 export async function agregarFoto(tipo, id, archivo) {
-  if (!USE_MOCK) {
-    const f = new FormData()
-    f.append('foto', archivo)
-    return http('POST', `/${tipo}/${id}/fotos`, f, true) // -> { id, url }
-  }
+  if (!USE_MOCK) return real.agregarFoto(tipo, id, archivo)
   const p = db[tipo].find((x) => x.id === Number(id))
   const foto = { id: nextId++, url: await leerArchivo(archivo) }
   p.fotos.push(foto)
@@ -288,7 +263,7 @@ export async function agregarFoto(tipo, id, archivo) {
 }
 
 export async function eliminarFoto(tipo, id, fotoId) {
-  if (!USE_MOCK) return http('DELETE', `/${tipo}/${id}/fotos/${fotoId}`)
+  if (!USE_MOCK) return real.eliminarFoto(tipo, id, fotoId)
   const p = db[tipo].find((x) => x.id === Number(id))
   p.fotos = p.fotos.filter((f) => f.id !== fotoId)
   p.foto = p.fotos[0]?.url ?? null
@@ -296,21 +271,14 @@ export async function eliminarFoto(tipo, id, fotoId) {
 }
 
 export async function reportarInformacionIncorrecta(hallazgoId) {
-  if (!USE_MOCK) return http('POST', `/hallazgos/${hallazgoId}/reportar-incorrecto`)
+  if (!USE_MOCK) throw new Error('Esta acción no está disponible en el flujo actual.')
   return wait({ ok: true })
 }
 
 // ---------- Reclamos: solicitante ----------
 // data: { hallazgoId, descripcionPrivada, declaracion, evidencia }
 export async function crearReclamo(data) {
-  if (!USE_MOCK) {
-    const f = new FormData()
-    f.append('hallazgoId', data.hallazgoId)
-    f.append('descripcionPrivada', data.descripcionPrivada)
-    f.append('declaracion', data.declaracion)
-    if (data.evidencia) f.append('evidencia', data.evidencia)
-    return http('POST', '/reclamos', f, true)
-  }
+  if (!USE_MOCK) return real.crearReclamo(data)
   const h = db.hallazgos.find((x) => x.id === Number(data.hallazgoId))
   if (h.gestor.id === yo.id) return fail('Este objeto lo gestionas tú. No puedes reclamarlo.')
   const id = nextId++
@@ -327,7 +295,7 @@ export async function crearReclamo(data) {
 
 // -> { activos, porRevisar, alertas, historial }
 export async function misReclamos() {
-  if (!USE_MOCK) return http('GET', '/reclamos/mios')
+  if (!USE_MOCK) return real.misReclamos()
   const mios = db.reclamos.filter((r) => r.solicitante.id === yo.id).map((r) => ({ ...r, gestor: hallazgoDe(r)?.gestor, custodia: hallazgoDe(r)?.custodia }))
   const porRevisar = db.reclamos
     .filter((r) => hallazgoDe(r)?.gestor.id === yo.id && ESTADOS_ACTIVOS.includes(r.estado))
@@ -346,7 +314,7 @@ export async function misReclamos() {
  * al solicitante y al responsable.
  */
 export async function getReclamo(id) {
-  if (!USE_MOCK) return http('GET', `/reclamos/${id}`)
+  if (!USE_MOCK) return real.getReclamo(id)
   const r = reclamo(id)
   if (!r) return fail('No encontramos ese reclamo.')
   const h = hallazgoDe(r)
@@ -373,21 +341,21 @@ export async function getReclamo(id) {
 }
 
 export async function cancelarReclamo(id) {
-  if (!USE_MOCK) return http('POST', `/reclamos/${id}/cancelar`)
+  if (!USE_MOCK) return real.cancelarReclamo(id)
   const r = reclamo(id); r.estado = 'cancelado'
   const h = hallazgoDe(r); if (h) h.estado = estadoLibre(h)
   return wait(r)
 }
 
 export async function responderPruebas(id, texto) {
-  if (!USE_MOCK) return http('POST', `/reclamos/${id}/respuesta`, { texto })
+  if (!USE_MOCK) throw new Error('Esta acción no está disponible en el flujo actual.')
   const r = reclamo(id); r.estado = 'en_revision'; r.descripcionPrivada += `\n${texto}`
   return wait(r)
 }
 
 // Secuencia: el solicitante marca «Ya recuperé mi objeto» y se cierra el reclamo y el hallazgo
 export async function marcarRecuperado(id) {
-  if (!USE_MOCK) return http('POST', `/reclamos/${id}/recuperado`)
+  if (!USE_MOCK) return real.marcarRecuperado(id)
   const r = reclamo(id)
   if (r.estado !== 'aprobado') return fail('Solo puedes cerrar un reclamo aprobado.')
   r.estado = 'entregado'
@@ -398,28 +366,28 @@ export async function marcarRecuperado(id) {
 
 // ---------- Reclamos: responsable (quien lo encontró, docente, secretaría o vigilancia) ----------
 export async function iniciarRevision(id) {
-  if (!USE_MOCK) return http('POST', `/reclamos/${id}/revision`)
+  if (!USE_MOCK) throw new Error('Esta acción no está disponible en el flujo actual.')
   reclamo(id).estado = 'en_revision'; return wait({ ok: true })
 }
 export async function aprobarReclamo(id) {
-  if (!USE_MOCK) return http('POST', `/reclamos/${id}/aprobar`)
+  if (!USE_MOCK) return real.aprobarReclamo(id)
   reclamo(id).estado = 'aprobado'; return wait({ ok: true })
 }
 export async function rechazarReclamo(id, observaciones) {
-  if (!USE_MOCK) return http('POST', `/reclamos/${id}/rechazar`, { observaciones })
+  if (!USE_MOCK) return real.rechazarReclamo(id)
   const r = reclamo(id); r.estado = 'rechazado'; r.observaciones = observaciones
   const h = hallazgoDe(r); if (h) h.estado = estadoLibre(h)
   return wait({ ok: true })
 }
 export async function pedirPruebas(id, observaciones) {
-  if (!USE_MOCK) return http('POST', `/reclamos/${id}/pedir-pruebas`, { observaciones })
+  if (!USE_MOCK) throw new Error('Esta acción no está disponible en el flujo actual.')
   const r = reclamo(id); r.estado = 'requiere_pruebas'; r.observaciones = observaciones
   return wait({ ok: true })
 }
 
 // ---------- Vigilancia / Administrador ----------
 export async function colaVigilancia() {
-  if (!USE_MOCK) return http('GET', '/vigilancia/cola') // -> { stats, reclamos, entregas, publicaciones }
+  if (!USE_MOCK) throw new Error('Esta acción no está disponible en el flujo actual.')
   const reclamos = db.reclamos.filter((r) => ['enviado', 'en_revision'].includes(r.estado))
   const entregas = db.reclamos.filter((r) => r.estado === 'aprobado').map((r) => ({ ...r, custodia: hallazgoDe(r)?.custodia }))
   return wait({
@@ -433,19 +401,19 @@ export async function colaVigilancia() {
   })
 }
 export async function editarHallazgo(id, cambios) {
-  if (!USE_MOCK) return http('PATCH', `/hallazgos/${id}`, cambios)
+  if (!USE_MOCK) return real.editarHallazgo(id, cambios)
   const h = db.hallazgos.find((x) => x.id === Number(id))
   const { fecha, hora, descripcion, ...resto } = cambios
   Object.assign(h, resto, fecha ? { fecha: aISO(fecha, hora) } : {}, descripcion != null ? { descripcionPublica: descripcion } : {})
   return wait(h)
 }
 export async function retirarHallazgo(id) {
-  if (!USE_MOCK) return http('DELETE', `/hallazgos/${id}`)
+  if (!USE_MOCK) return real.retirarHallazgo(id)
   db.hallazgos = db.hallazgos.filter((h) => h.id !== Number(id)); return wait({ ok: true })
 }
 // Estado diagrama: Aprobado -> Entregado «Vigilancia confirma entrega física» (acta con matrícula y código)
 export async function registrarEntrega(id, { matricula, codigo }) {
-  if (!USE_MOCK) return http('POST', `/reclamos/${id}/entrega`, { matricula, codigo })
+  if (!USE_MOCK) throw new Error('Esta acción no está disponible en el flujo actual.')
   if (!/^\d{6}$/.test(codigo)) return fail('El código de entrega tiene 6 dígitos.')
   const r = reclamo(id)
   if (matricula !== r.solicitante.matricula) return fail('La matrícula no coincide con la del solicitante.')
@@ -454,9 +422,11 @@ export async function registrarEntrega(id, { matricula, codigo }) {
   return wait({ ok: true })
 }
 export async function auditoriaCSV() {
-  if (!USE_MOCK) return http('GET', '/vigilancia/auditoria.csv')
+  if (!USE_MOCK) throw new Error('Esta acción no está disponible en el flujo actual.')
   const filas = [['folio', 'tipo', 'estado', 'fecha']]
   db.hallazgos.forEach((h) => filas.push([h.folio, 'hallazgo', h.estado, h.fecha]))
   db.reclamos.forEach((r) => filas.push([r.folio, 'reclamo', r.estado, r.creado]))
   return wait(filas.map((f) => f.join(',')).join('\n'))
 }
+
+export async function logout() { if (!USE_MOCK) await real.logout() }

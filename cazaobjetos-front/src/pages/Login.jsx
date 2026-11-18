@@ -65,6 +65,7 @@ export default function Login() {
             </span>
           </div>
         )}
+        <Link className="link-green" to="/verificar" state={{ correo: email }}>Verificar mi correo</Link>
         <button className="btn btn--primary" disabled={cargando}>{cargando ? 'Entrando…' : 'Entrar'}</button>
       </form>
     </AuthShell>

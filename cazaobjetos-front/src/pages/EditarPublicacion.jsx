@@ -6,8 +6,8 @@ import FotosEditor from '../components/FotosEditor.jsx'
 import { FormEncontre, FormPerdi } from './Reportar.jsx'
 
 const p = (n) => String(n).padStart(2, '0')
-const fechaLocal = (iso) => { const d = new Date(iso); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}` }
-const horaLocal = (iso) => { const d = new Date(iso); return `${p(d.getHours())}:${p(d.getMinutes())}` }
+const fechaLocal = (iso) => { const d = new Date(iso.length === 10 ? `${iso}T12:00:00` : iso); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}` }
+const horaLocal = (iso) => { const d = new Date(iso.length === 10 ? `${iso}T12:00:00` : iso); return `${p(d.getHours())}:${p(d.getMinutes())}` }
 
 const TIPOS = {
   hallazgo: {

@@ -10,7 +10,7 @@ import { fechaCorta } from '../lib/format.js'
 
 function Progreso({ estado }) {
   const etapa = ESTADOS_RECLAMO[estado]?.etapa ?? 1
-  const cerradoSinEntrega = ['rechazado', 'cancelado'].includes(estado)
+  const cerradoSinEntrega = ['rechazado', 'cancelado', 'cerrado'].includes(estado)
   return (
     <div className="metabox">
       <div className="mono muted">{cerradoSinEntrega ? 'RECLAMO CERRADO' : `ETAPA ${etapa} DE 4`}</div>
@@ -157,8 +157,8 @@ export default function DetalleReclamo() {
         <section className="card">
           <h2 className="section-title">Tu decisión</h2>
           {abierto === 'rechazar' && (
-            <AccionTexto etiqueta="Motivo del rechazo" placeholder="ej. Los detalles no coinciden con el objeto." boton="Rechazar reclamo" tipoBoton="btn--danger"
-              onCancelar={() => setAbierto(null)} onEnviar={(t) => run(() => api.rechazarReclamo(r.id, t), 'Reclamo rechazado.')} />
+            api.USE_MOCK ? <AccionTexto etiqueta="Motivo del rechazo" placeholder="ej. Los detalles no coinciden con el objeto." boton="Rechazar reclamo" tipoBoton="btn--danger"
+              onCancelar={() => setAbierto(null)} onEnviar={(t) => run(() => api.rechazarReclamo(r.id, t), 'Reclamo rechazado.')} /> : <div className="btn-row"><button className="btn btn--secondary" onClick={() => setAbierto(null)}>Cancelar</button><button className="btn btn--danger" onClick={() => run(() => api.rechazarReclamo(r.id), 'Reclamo rechazado.')}>Rechazar reclamo</button></div>
           )}
           {abierto === 'pruebas' && (
             <AccionTexto etiqueta="¿Qué información adicional necesitas?" placeholder="ej. ¿Qué archivos tiene en la carpeta principal?" boton="Pedir pruebas"

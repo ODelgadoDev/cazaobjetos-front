@@ -56,7 +56,7 @@ export default function MisReclamos() {
   const tabs = [
     { id: 'activos', label: 'Activos', n: data.activos.length },
     { id: 'revisar', label: 'Por revisar', n: data.porRevisar.length, hot: data.porRevisar.length > 0 },
-    { id: 'alertas', label: 'Alertas', n: data.alertas.length, hot: data.alertas.length > 0 },
+    ...(api.USE_MOCK ? [{ id: 'alertas', label: 'Alertas', n: data.alertas.length, hot: data.alertas.length > 0 }] : []),
     { id: 'historial', label: 'Historial', n: data.historial.length },
   ]
 
@@ -128,10 +128,11 @@ export default function MisReclamos() {
                 {r.solicitante.nombre} · <a href={`mailto:${r.solicitante.correo}`}>{r.solicitante.correo}</a>
               </span>
               <div className="quote">“{r.descripcionPrivada}”</div>
-              {r.estado === 'enviado' && (
+              {api.USE_MOCK && r.estado === 'enviado' && (
                 <button className="btn btn--primary" onClick={() => run(() => api.iniciarRevision(r.id), 'Revisión iniciada.')}>Iniciar revisión</button>
               )}
-              {r.estado === 'en_revision' && (
+              {!api.USE_MOCK && r.estado === 'enviado' && <div className="btn-row"><button className="btn btn--primary" onClick={() => run(() => api.aprobarReclamo(r.id), 'Reclamo aceptado.')}>Aceptar reclamo</button><button className="btn btn--danger" onClick={() => { if (window.confirm('¿Rechazar este reclamo?')) run(() => api.rechazarReclamo(r.id), 'Reclamo rechazado.') }}>Rechazar</button></div>}
+              {api.USE_MOCK && r.estado === 'en_revision' && (
                 <>
                   <button className="btn btn--primary" onClick={() => run(() => api.aprobarReclamo(r.id), 'Propiedad validada. Coordina la entrega por correo.')}>
                     <IconCheck width={18} height={18} /> Propiedad validada
