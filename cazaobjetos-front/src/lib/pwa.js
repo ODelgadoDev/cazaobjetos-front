@@ -1,43 +1,51 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+let installationObserved = false
 
 /** Botón «Instalar app»: Chrome, Edge y Android disparan beforeinstallprompt. */
 export function useInstall() {
   const [evento, setEvento] = useState(null)
+  const prompting = useRef(false)
+  const [instalando, setInstalando] = useState(false)
   const [instalada, setInstalada] = useState(
-    window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+    installationObserved || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
   )
   const [mostrarAyuda, setMostrarAyuda] = useState(false)
 
   useEffect(() => {
     const antes = (e) => { e.preventDefault(); setEvento(e) }
-    const despues = () => { setEvento(null); setInstalada(true) }
+    const despues = () => { installationObserved = true; setEvento(null); setInstalada(true); setMostrarAyuda(false) }
+    const media = matchMedia('(display-mode: standalone)')
+    const mode = () => setInstalada(installationObserved || media.matches || navigator.standalone === true)
+    media.addEventListener('change', mode)
     window.addEventListener('beforeinstallprompt', antes)
     window.addEventListener('appinstalled', despues)
     return () => {
+      media.removeEventListener('change', mode)
       window.removeEventListener('beforeinstallprompt', antes)
       window.removeEventListener('appinstalled', despues)
     }
   }, [])
 
   async function instalar() {
+    if (prompting.current) return
     if (!evento) {
       setMostrarAyuda(true)
       return
     }
 
+    prompting.current = true; setInstalando(true)
     try {
       await evento.prompt()
-      const { outcome } = await evento.userChoice
+      await evento.userChoice
       setEvento(null)
-      if (outcome === 'dismissed') setMostrarAyuda(true)
-    } catch (error) {
-      setEvento(null)
-      setMostrarAyuda(true)
-      console.error('No se pudo abrir el diálogo de instalación de CazaObjetos.', error)
-    }
+    } catch {
+      setEvento(null); setMostrarAyuda(true)
+    } finally { prompting.current = false; setInstalando(false) }
   }
   return {
     instalada,
+    instalando,
     mostrarAyuda,
     cerrarAyuda: () => setMostrarAyuda(false),
     instalar,

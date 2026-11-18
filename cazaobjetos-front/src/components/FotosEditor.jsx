@@ -1,5 +1,6 @@
+import ImageAttachment from './ImageAttachment.jsx'
 import { useState } from 'react'
-import { agregarFoto, eliminarFoto } from '../lib/api.js'
+import { agregarFoto, eliminarFoto, importarFoto } from '../lib/api.js'
 import { useToast } from './Toast.jsx'
 import { IconImage, IconTrash } from './Icons.jsx'
 
@@ -10,6 +11,7 @@ const MAX_MB = 5
 export default function FotosEditor({ tipo, id, fotos: iniciales = [] }) {
   const toast = useToast()
   const [fotos, setFotos] = useState(iniciales)
+  const [imagen, setImagen] = useState(null)
   const [error, setError] = useState('')
   const [ocupado, setOcupado] = useState(false)
 
@@ -26,6 +28,20 @@ export default function FotosEditor({ tipo, id, fotos: iniciales = [] }) {
       setFotos((prev) => [...prev, f])
       toast('Foto agregada.')
     } catch (err) { setError(err.message) } finally { setOcupado(false) }
+  }
+
+  async function agregarImagen() {
+    if (!imagen || ocupado) return
+    setError('')
+    setOcupado(true)
+    try {
+      const foto = imagen.file
+        ? await agregarFoto(tipo, id, imagen.file, imagen.referenceImage)
+        : await importarFoto(id, imagen.url, imagen.referenceImage)
+      setFotos((previous) => [...previous, foto])
+      setImagen(null)
+      toast('Imagen agregada.')
+    } catch (error) { setError(error.message) } finally { setOcupado(false) }
   }
 
   async function quitar(fotoId) {
@@ -47,12 +63,13 @@ export default function FotosEditor({ tipo, id, fotos: iniciales = [] }) {
         {fotos.map((f, i) => (
           <figure key={f.id} className="fotos__item">
             <img src={f.url} alt={`Foto ${i + 1}`} />
+            {f.referenceImage && <figcaption className="photo__reference">Referencia</figcaption>}
             <button type="button" className="fotos__quitar" onClick={() => quitar(f.id)} disabled={ocupado} aria-label={`Quitar foto ${i + 1}`}>
               <IconTrash width={18} height={18} />
             </button>
           </figure>
         ))}
-        {fotos.length < MAX_FOTOS && (
+        {tipo !== 'extravios' && fotos.length < MAX_FOTOS && (
           <label className="dropzone fotos__nueva">
             <IconImage width={24} height={24} />
             <strong>{ocupado ? 'Subiendo…' : 'Agregar foto'}</strong>
@@ -60,6 +77,10 @@ export default function FotosEditor({ tipo, id, fotos: iniciales = [] }) {
           </label>
         )}
       </div>
+      {tipo === 'extravios' && fotos.length < MAX_FOTOS && <>
+        <ImageAttachment value={imagen} onChange={setImagen} disabled={ocupado} />
+        {imagen && <button type="button" className="btn btn--primary" onClick={agregarImagen} disabled={ocupado}>{ocupado ? 'Guardando imagen…' : 'Agregar imagen al reporte'}</button>}
+      </>}
       {!fotos.length && <p className="muted" style={{ margin: 0 }}>Sin fotos. Una foto ayuda a reconocer el objeto; evita mostrar datos personales.</p>}
       {error && <div className="notice notice--peligro" role="alert">{error}</div>}
     </section>

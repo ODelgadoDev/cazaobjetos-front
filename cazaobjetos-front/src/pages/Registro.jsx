@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { registrar } from '../lib/api.js'
 import { DOMINIO, MIN_PASSWORD } from '../lib/constants.js'
+import PasswordInput from '../components/PasswordInput.jsx'
 import AuthShell, { VolverAlLogin } from '../components/AuthShell.jsx'
 
 export default function Registro() {
@@ -43,12 +44,12 @@ export default function Registro() {
         </div>
         <div className="field">
           <label htmlFor="r-pass">Contraseña</label>
-          <input id="r-pass" className="input" type="password" autoComplete="new-password" value={f.password} onChange={set('password')} aria-describedby="r-pass-ayuda" />
+          <PasswordInput id="r-pass" className="input" autoComplete="new-password" value={f.password} onChange={set('password')} aria-describedby="r-pass-ayuda" />
           <span id="r-pass-ayuda" className="help">MÍN. {MIN_PASSWORD} CARACTERES</span>
         </div>
         <div className="field">
           <label htmlFor="r-conf">Confirma la contraseña</label>
-          <input id="r-conf" className="input" type="password" autoComplete="new-password" value={f.confirmar} onChange={set('confirmar')} />
+          <PasswordInput id="r-conf" className="input" visibilityLabel="confirmación de contraseña" autoComplete="new-password" value={f.confirmar} onChange={set('confirmar')} />
         </div>
         {error && <div className="notice notice--peligro" role="alert">{error}</div>}
         <button className="btn btn--primary" disabled={enviando}>{enviando ? 'Creando cuenta…' : 'Crear cuenta'}</button>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { editarExtravio, editarHallazgo, getExtravio, getHallazgo } from '../lib/api.js'
 import { useToast } from '../components/Toast.jsx'
 import FotosEditor from '../components/FotosEditor.jsx'
@@ -22,6 +22,7 @@ const TIPOS = {
 
 export default function EditarPublicacion() {
   const { tipo, id } = useParams()
+  const { state } = useLocation()
   const navigate = useNavigate()
   const toast = useToast()
   const cfg = TIPOS[tipo]
@@ -46,8 +47,9 @@ export default function EditarPublicacion() {
 
   return (
     <>
+      {state?.aviso && <div className="notice notice--pend" role="status">{state.aviso}</div>}
       <p className="folio" style={{ margin: 0 }}>FOLIO {item.folio}</p>
-      <FotosEditor tipo={cfg.fotos} id={item.id} fotos={item.fotos ?? []} />
+      {item.permisos?.editarFotos !== false ? <FotosEditor tipo={cfg.fotos} id={item.id} fotos={item.fotos ?? []} /> : <div className="notice notice--info">La ficha se puede corregir. Las fotos publicadas se conservan mientras haya reclamos activos; las pruebas nuevas se adjuntan dentro del expediente.</div>}
       <Form edicion={{ inicial: cfg.inicial(item), onGuardar }} />
     </>
   )

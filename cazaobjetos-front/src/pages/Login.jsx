@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { USE_MOCK } from '../lib/api.js'
 import { DOMINIO } from '../lib/constants.js'
+import PasswordInput from '../components/PasswordInput.jsx'
 import AuthShell from '../components/AuthShell.jsx'
 
 export default function Login() {
@@ -55,7 +56,7 @@ export default function Login() {
         </div>
         <div className="field">
           <label htmlFor="pass">Contraseña <Link className="link" to="/recuperar" state={{ correo: email }}>¿La olvidaste?</Link></label>
-          <input id="pass" className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput id="pass" className="input" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         {error && (
           <div className="notice notice--peligro" role="alert">

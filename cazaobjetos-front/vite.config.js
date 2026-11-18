@@ -18,7 +18,7 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'any',
-        theme_color: '#1E212B',
+        theme_color: '#ffffff',
         background_color: '#F5F7F1',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
@@ -32,6 +32,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ['/push-worker.js'],
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api(?:\/|$)/],
@@ -46,7 +47,7 @@ export default defineConfig({
         ],
         // Las llamadas a la API del back NO se guardan en caché: siempre van a la red.
       },
-      devOptions: { enabled: false },
+      devOptions: { enabled: true, type: 'classic', suppressWarnings: true },
     }),
   ],
   server: { host: '127.0.0.1', port: 5173, proxy: { '/api': 'http://127.0.0.1:8080' } },

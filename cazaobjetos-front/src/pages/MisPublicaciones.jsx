@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import * as api from '../lib/api.js'
-import { CASETAS } from '../lib/constants.js'
+import CustodyEditor from '../components/CustodyEditor.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { Chip, ChipExtravio, ChipHallazgo } from '../components/Chip.jsx'
 import { IconCheck, IconEdit, IconPlus, IconTrash } from '../components/Icons.jsx'
@@ -13,30 +13,9 @@ const TABS = [
   { id: 'extravios', label: 'Perdí' },
 ]
 
-/** Formulario en línea para una acción que necesita elegir algo (caseta o responsable). */
-function AccionConSelect({ etiqueta, opciones, boton, onConfirmar, onCancelar }) {
-  const [valor, setValor] = useState(opciones[0]?.value ?? '')
-  const [enviando, setEnviando] = useState(false)
-  return (
-    <div className="inline-form">
-      <label className="field">
-        <span className="label">{etiqueta}</span>
-        <select className="select" value={valor} onChange={(e) => setValor(e.target.value)}>
-          {opciones.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </label>
-      <div className="btn-row">
-        <button className="btn btn--secondary" onClick={onCancelar}>Cancelar</button>
-        <button className="btn btn--primary" disabled={!valor || enviando} onClick={async () => { setEnviando(true); await onConfirmar(valor); setEnviando(false) }}>{boton}</button>
-      </div>
-    </div>
-  )
-}
-
-function HallazgoItem({ h, delegados, run }) {
-  const [abierto, setAbierto] = useState(null) // 'oficina' | 'delegar'
+function HallazgoItem({ h, run }) {
+  const [abierto, setAbierto] = useState(null) // Editor de resguardo
   const p = h.permisos || {}
-  const opcionesDelegar = delegados.filter((d) => d.id !== h.gestor?.id).map((d) => ({ value: d.id, label: d.nombre }))
 
   return (
     <article className="card">
@@ -50,30 +29,12 @@ function HallazgoItem({ h, delegados, run }) {
         {h.autor && h.gestor && h.autor.id !== h.gestor.id && <div><span className="k">REPORTÓ</span> {h.autor.nombre}</div>}
       </div>
 
-      {abierto === 'oficina' && (
-        <AccionConSelect
-          etiqueta="¿Dónde lo dejaste?" boton="Confirmar"
-          opciones={CASETAS.map((c) => ({ value: c, label: c }))}
-          onCancelar={() => setAbierto(null)}
-          onConfirmar={async (caseta) => { if (await run(() => api.marcarEnOficina(h.id, caseta), `Listo. ${h.folio} quedó en ${caseta}.`)) setAbierto(null) }}
-        />
-      )}
-      {abierto === 'delegar' && (
-        opcionesDelegar.length ? (
-          <AccionConSelect
-            etiqueta="Nuevo responsable" boton="Delegar"
-            opciones={opcionesDelegar}
-            onCancelar={() => setAbierto(null)}
-            onConfirmar={async (id) => { if (await run(() => api.delegarHallazgo(h.id, id), 'Gestión delegada. El responsable recibirá los reclamos.')) setAbierto(null) }}
-          />
-        ) : <p className="muted" style={{ margin: 0 }}>No hay responsables disponibles para delegar.</p>
-      )}
+      {abierto === 'resguardo' && <CustodyEditor item={h} onCancel={() => setAbierto(null)} onSaved={() => { setAbierto(null); run(async () => {}, 'Resguardo actualizado.') }} />}
 
       {!abierto && (
         <div className="acciones">
           {p.editar && <Link className="btn btn--secondary" to={`/editar/hallazgo/${h.id}`}><IconEdit width={18} height={18} /> Editar</Link>}
-          {p.dejarEnOficina && <button className="btn btn--secondary" onClick={() => setAbierto('oficina')}>Lo dejé en oficina</button>}
-          {p.delegar && <button className="btn btn--secondary" onClick={() => setAbierto('delegar')}>Delegar</button>}
+          {p.cambiarResguardo && <button className="btn btn--secondary" onClick={() => setAbierto('resguardo')}>Cambiar resguardo</button>}
           {p.retirar && (
             <button className="btn btn--link-danger" onClick={() => { if (window.confirm(`¿Retirar la publicación ${h.folio}? Dejará de verse en Explorar.`)) run(() => api.retirarHallazgo(h.id), 'Publicación retirada.') }}>
               <IconTrash width={18} height={18} /> Retirar publicación
@@ -81,7 +42,7 @@ function HallazgoItem({ h, delegados, run }) {
           )}
         </div>
       )}
-      {!p.editar && !p.dejarEnOficina && !p.delegar && !p.retirar && (
+      {!p.editar && !p.cambiarResguardo && !p.retirar && (
         <p className="help" style={{ margin: 0 }}>{h.estado === 'retirado' ? 'PUBLICACIÓN RETIRADA' : h.estado === 'entregado' ? 'OBJETO ENTREGADO · SIN ACCIONES' : 'SIN ACCIONES DISPONIBLES PARA TU CUENTA EN ESTE ESTADO'}</p>
       )}
     </article>
@@ -122,12 +83,10 @@ export default function MisPublicaciones() {
   const [params, setParams] = useSearchParams()
   const tab = TABS.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'hallazgos'
   const [data, setData] = useState(null)
-  const [delegados, setDelegados] = useState([])
   const [error, setError] = useState('')
 
   const cargar = useCallback(() => { api.misPublicaciones().then((d) => { setData(d); setError('') }).catch((e) => setError(e.message)) }, [])
   useEffect(cargar, [cargar])
-  useEffect(() => { api.listDelegados().then(setDelegados).catch(() => {}) }, [])
 
   async function run(fn, mensaje) {
     setError('')
@@ -159,7 +118,7 @@ export default function MisPublicaciones() {
       <div className="cards">
         {tab === 'extravios'
           ? lista.map((e) => <ExtravioItem key={e.id} e={e} run={run} />)
-          : lista.map((h) => <HallazgoItem key={h.id} h={h} delegados={delegados} run={run} />)}
+          : lista.map((h) => <HallazgoItem key={h.id} h={h} run={run} />)}
       </div>
       {!lista.length && <p className="empty">{vacio}</p>}
 

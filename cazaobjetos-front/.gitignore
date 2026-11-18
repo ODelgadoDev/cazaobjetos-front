@@ -6,3 +6,6 @@ dist
 
 .env.*
 !.env.example
+
+# Generated development service worker
+dev-dist

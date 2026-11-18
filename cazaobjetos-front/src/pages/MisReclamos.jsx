@@ -1,37 +1,26 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import * as api from '../lib/api.js'
-import { ESTADOS_RECLAMO, ETAPAS } from '../lib/constants.js'
+import ClaimProgress from '../components/ClaimProgress.jsx'
+import { useNotifications } from '../context/NotificationContext.jsx'
+import { useSearchParams } from 'react-router-dom'
 import { useToast } from '../components/Toast.jsx'
 import { Chip, ChipReclamo } from '../components/Chip.jsx'
 import { IconCheck, IconImage, IconPlus, IconX } from '../components/Icons.jsx'
 import { fechaCorta } from '../lib/format.js'
 
-function Progreso({ etapa }) {
-  return (
-    <div className="metabox">
-      <div className="mono muted">ETAPA {etapa} DE 4</div>
-      <div className="progress" role="progressbar" aria-valuemin={1} aria-valuemax={4} aria-valuenow={etapa}>
-        {ETAPAS.map((_, i) => <i key={i} className={i < etapa ? 'on' : ''} />)}
-      </div>
-      <div className="progress-labels">
-        {ETAPAS.map((e, i) => <span key={e} className={i === etapa - 1 ? 'on' : ''}>{e}</span>)}
-      </div>
-    </div>
-  )
-}
-
 export default function MisReclamos() {
   const navigate = useNavigate()
   const toast = useToast()
-  const [tab, setTab] = useState('activos')
+  const [params, setParams] = useSearchParams()
+  const { unread, version } = useNotifications()
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [respondiendo, setRespondiendo] = useState(null)
   const [texto, setTexto] = useState('')
 
   const cargar = useCallback(() => { api.misReclamos().then(setData).catch((e) => setError(e.message)) }, [])
-  useEffect(cargar, [cargar])
+  useEffect(cargar, [cargar, version])
 
   async function run(fn, mensaje) {
     setError('')
@@ -53,6 +42,10 @@ export default function MisReclamos() {
   if (error && !data) return <div className="notice notice--peligro" role="alert">{error}</div>
   if (!data) return <p className="empty">Cargando tus reclamos…</p>
 
+  const pendingReview = data.porRevisar.filter((claim) => claim.estado === 'enviado').length
+  const requestedTab = params.get('tab')
+  const tab = ['activos', 'revisar', 'historial', ...(api.USE_MOCK ? ['alertas'] : [])].includes(requestedTab) ? requestedTab : pendingReview ? 'revisar' : 'activos'
+  const setTab = (next) => setParams({ tab: next })
   const tabs = [
     { id: 'activos', label: 'Activos', n: data.activos.length },
     { id: 'revisar', label: 'Por revisar', n: data.porRevisar.length, hot: data.porRevisar.length > 0 },
@@ -62,6 +55,7 @@ export default function MisReclamos() {
 
   return (
     <>
+      <div className="card claim-work-summary"><strong>{pendingReview} {pendingReview === 1 ? 'solicitud espera' : 'solicitudes esperan'} tu revisión</strong><Link className="link-green" to="/notificaciones">{unread} {unread === 1 ? 'aviso sin leer' : 'avisos sin leer'}</Link></div>
       <div className="tabs" role="tablist">
         {tabs.map((t) => (
           <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'is-active' : ''} onClick={() => setTab(t.id)}>
@@ -79,10 +73,10 @@ export default function MisReclamos() {
             <article key={r.id} className="card">
               <div className="pager"><span className="folio">{r.folio}</span><ChipReclamo estado={r.estado} /></div>
               <h3><Link to={`/reclamos/${r.id}`}>{r.titulo}</Link></h3>
-              <Progreso etapa={ESTADOS_RECLAMO[r.estado].etapa} />
+              <ClaimProgress estado={r.estado} />
 
               {['enviado', 'en_revision'].includes(r.estado) && (
-                <div className="notice notice--info"><span>Se comunican por correo institucional. {r.gestor && <>Responsable: <a href={`mailto:${r.gestor.correo}`}><b>{r.gestor.nombre}</b></a>.</>}</span></div>
+                <div className="notice notice--info"><span>Consulta el expediente para aportar pruebas y conversar en los comentarios. {r.gestor && <>Responsable: <b>{r.gestor.nombre}</b>.</>}</span></div>
               )}
               {r.estado === 'requiere_pruebas' && (
                 <>
@@ -99,7 +93,7 @@ export default function MisReclamos() {
               )}
               {r.estado === 'aprobado' && (
                 <>
-                  <div className="notice notice--ok"><span>Aprobado. Recógelo {r.custodia ? <>en <b>{r.custodia}</b></> : 'en el encuentro acordado'} con tu credencial.</span></div>
+                  <div className="notice notice--ok"><span>Solicitud aceptada. Recógelo {r.custodia ? <>en <b>{r.custodia}</b></> : 'en el encuentro acordado'} con tu credencial.</span></div>
                   <button className="btn btn--primary" onClick={() => { if (window.confirm('¿Confirmas que ya tienes tu objeto? Se cerrará el reclamo.')) run(() => api.marcarRecuperado(r.id), 'Listo. Reclamo cerrado.') }}>
                     <IconCheck width={18} height={18} /> Ya recuperé mi objeto
                   </button>
@@ -110,7 +104,7 @@ export default function MisReclamos() {
                   <IconX width={18} height={18} /> Cancelar reclamo
                 </button>
               )}
-              <Link className="link-green" to={`/reclamos/${r.id}`}>Ver detalle del reclamo</Link>
+              <Link className="link-green" to={`/reclamos/${r.id}`}>Abrir expediente</Link>
             </article>
           ))}
           {!data.activos.length && <p className="empty">No tienes reclamos activos. Busca tu objeto en Explorar y reclámalo.</p>}
@@ -125,16 +119,16 @@ export default function MisReclamos() {
               <div className="pager"><span className="folio">{r.folio}</span><ChipReclamo estado={r.estado} /></div>
               <h3><Link to={`/reclamos/${r.id}`}>{r.titulo}</Link></h3>
               <span className="mono muted" style={{ fontSize: 12 }}>
-                {r.solicitante.nombre} · <a href={`mailto:${r.solicitante.correo}`}>{r.solicitante.correo}</a>
+                {r.solicitante.nombre}
               </span>
               <div className="quote">“{r.descripcionPrivada}”</div>
               {api.USE_MOCK && r.estado === 'enviado' && (
                 <button className="btn btn--primary" onClick={() => run(() => api.iniciarRevision(r.id), 'Revisión iniciada.')}>Iniciar revisión</button>
               )}
-              {!api.USE_MOCK && r.estado === 'enviado' && <div className="btn-row"><button className="btn btn--primary" onClick={() => run(() => api.aprobarReclamo(r.id), 'Reclamo aceptado.')}>Aceptar reclamo</button><button className="btn btn--danger" onClick={() => { if (window.confirm('¿Rechazar este reclamo?')) run(() => api.rechazarReclamo(r.id), 'Reclamo rechazado.') }}>Rechazar</button></div>}
+              {!api.USE_MOCK && r.estado === 'enviado' && <p className="account-help">Revisa las pruebas y los comentarios del expediente antes de aceptar o rechazar.</p>}
               {api.USE_MOCK && r.estado === 'en_revision' && (
                 <>
-                  <button className="btn btn--primary" onClick={() => run(() => api.aprobarReclamo(r.id), 'Propiedad validada. Coordina la entrega por correo.')}>
+                  <button className="btn btn--primary" onClick={() => run(() => api.aprobarReclamo(r.id), 'Propiedad validada. Coordina la entrega en los comentarios.')}>
                     <IconCheck width={18} height={18} /> Propiedad validada
                   </button>
                   <div className="btn-row">
@@ -144,8 +138,8 @@ export default function MisReclamos() {
                 </>
               )}
               {r.estado === 'requiere_pruebas' && <div className="notice notice--pend"><span>Esperando respuesta del solicitante.</span></div>}
-              <Link className="link-green" to={`/reclamos/${r.id}`}>Ver detalle del reclamo</Link>
-              {r.estado === 'aprobado' && <div className="notice notice--ok"><span>Aprobado. Coordina la entrega por correo; el solicitante cerrará el reclamo al recibirlo.</span></div>}
+              <Link className="link-green" to={`/reclamos/${r.id}`}>Abrir expediente</Link>
+              {r.estado === 'aprobado' && <div className="notice notice--ok"><span>Solicitud aceptada. Coordina la entrega en los comentarios del expediente. El solicitante confirma al recibirlo.</span></div>}
             </article>
           ))}
           {!data.porRevisar.length && <p className="empty">No tienes solicitudes por revisar. Aquí llegan los reclamos de los objetos que gestionas.</p>}

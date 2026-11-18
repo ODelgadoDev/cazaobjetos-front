@@ -3,11 +3,12 @@ import { Chip, ChipExtravio, ChipHallazgo } from './Chip.jsx'
 import { IconArrowRight, IconCalendar, IconImage, IconPin } from './Icons.jsx'
 import { fechaCorta } from '../lib/format.js'
 
-export function Foto({ folio, src }) {
+export function Foto({ folio, src, reference = false }) {
   return (
     <div className="photo">
       {folio && <span className="folio">FOLIO {folio}</span>}
       {src ? <img src={src} alt="" /> : <IconImage width={28} height={28} />}
+      {src && reference && <span className="photo__reference">Imagen de referencia</span>}
     </div>
   )
 }
@@ -26,7 +27,7 @@ export default function ObjectCard({ h }) {
         <div><IconPin width={16} height={16} /> <span><span className="k">Lugar:</span> {h.lugar}</span></div>
       </div>
       <Link to={`/reclamo/${h.id}`} className="btn btn--primary">
-        Ver detalles / Reclamar objeto <IconArrowRight width={18} height={18} />
+        Ver hallazgo <IconArrowRight width={18} height={18} />
       </Link>
     </article>
   )
@@ -35,7 +36,7 @@ export default function ObjectCard({ h }) {
 export function ExtravioCard({ e }) {
   return (
     <article className="card">
-      <Foto folio={e.folio} src={e.foto} />
+      <Foto folio={e.folio} src={e.foto} reference={e.fotos?.[0]?.referenceImage} />
       <div className="chips">
         <Chip>{e.categoria}</Chip>
         <ChipExtravio estado={e.estado} />

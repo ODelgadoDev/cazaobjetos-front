@@ -7,6 +7,7 @@
  *   acuérdenlo con quien hace el back y ajusten solo este archivo.
  */
 import * as real from './realApi.js'
+import { normalizedProfile, profileError, profilePhotoError, studentNumber } from './profile.js'
 import { seed } from './mockData.js'
 import { ESTADOS_ACTIVOS, ESTADOS_CERRADOS } from './constants.js'
 
@@ -55,13 +56,15 @@ function permisosHallazgo(h) {
     editar: puedo && abierto,
     dejarEnOficina: puedo && abierto && h.resguardo === 'persona',
     delegar: (soyGestor || esStaff()) && abierto && !conReclamo,
+    editarFotos: puedo && abierto && !conReclamo,
+    cambiarResguardo: puedo && abierto,
     retirar: (soyAutor || esStaff()) && abierto && !conReclamo,
   }
 }
 function permisosExtravio(e) {
   const mio = e.autor?.id === yo.id || esStaff()
   const activo = e.estado === 'activo'
-  return { editar: mio && activo, retirar: mio && activo, marcarRecuperado: mio && activo }
+  return { editar: mio && activo, editarFotos: mio && activo, vincular: mio && activo, retirar: mio && activo, marcarRecuperado: mio && activo }
 }
 
 // ---------- Auth ----------
@@ -120,6 +123,30 @@ export async function getPerfil() {
   return wait(yo)
 }
 
+export async function guardarPerfil(data) {
+  const error = profileError(data)
+  if (error) return fail(error)
+  const clean = normalizedProfile(data)
+  if (!USE_MOCK) return real.guardarPerfil(clean)
+  yo = { ...yo, ...clean, matricula: studentNumber(yo.correo, yo.rol) }
+  db.usuarios[yo.correo] = yo
+  return wait(yo)
+}
+export async function subirFotoPerfil(file) {
+  const error = profilePhotoError(file)
+  if (error) return fail(error)
+  if (!USE_MOCK) return real.subirFotoPerfil(file)
+  yo = { ...yo, fotoPerfil: await leerArchivo(file) }
+  db.usuarios[yo.correo] = yo
+  return wait(yo)
+}
+export async function quitarFotoPerfil() {
+  if (!USE_MOCK) return real.quitarFotoPerfil()
+  yo = { ...yo, fotoPerfil: null }
+  db.usuarios[yo.correo] = yo
+  return wait(yo)
+}
+
 export async function cambiarPassword({ actual, nueva }) {
   if (!USE_MOCK) return real.cambiarPassword({ actual, nueva })
   if (db.passwords[yo.correo] && db.passwords[yo.correo] !== actual) return fail('La contraseña actual no es correcta.')
@@ -141,7 +168,8 @@ export async function listHallazgos({ q = '', categoria = 'Todos', zona = 'Todos
 export async function getHallazgo(id) {
   if (!USE_MOCK) return real.getHallazgo(id)
   const h = db.hallazgos.find((x) => x.id === Number(id))
-  return h ? wait({ ...h, permisos: permisosHallazgo(h) }) : fail('No encontramos ese objeto.')
+  const active = db.reclamos.find((claim) => claim.hallazgoId === h?.id && claim.solicitante.id === yo.id && ESTADOS_ACTIVOS.includes(claim.estado))
+  return h ? wait({ ...h, reclamoActivoId: active?.id || null, permisos: permisosHallazgo(h) }) : fail('No encontramos ese objeto.')
 }
 
 // Responsables posibles al delegar: docentes o secretaría
@@ -156,13 +184,17 @@ export async function listDelegados() {
  */
 export async function crearHallazgo(data) {
   if (!USE_MOCK) return real.crearHallazgo(data)
-  const gestor = data.gestion === 'yo' ? { id: yo.id, nombre: yo.nombre, correo: yo.correo } : db.delegados.find((d) => d.id === Number(data.delegadoId))
+  if (data.sourceLostReportId) { const source = extravio(data.sourceLostReportId); if (!source || source.estado !== 'activo' || source.autor.id === yo.id) return fail('El reporte original no está disponible para publicar un hallazgo vinculado.') }
+  if (!data.foto) return fail('Adjunta una foto real del objeto encontrado.')
+  const gestor = persona(yo)
+  const resguardo = data.resguardo || 'persona'
+  const custodia = resguardo === 'docente' ? `Con ${data.docente} · ${data.ubicacionResguardo || ''}` : resguardo === 'oficina' ? data.ubicacionResguardo || 'Oficina de profesores · edificio I' : null
   const id = nextId++
   const h = {
-    id, autor: persona(yo), fotos: data.fotoPreview ? [{ id: nextId++, url: data.fotoPreview }] : [],
+    id, sourceLostReportId: data.sourceLostReportId || null, autor: persona(yo), fotos: data.fotoPreview ? [{ id: nextId++, url: data.fotoPreview }] : [],
     folio: `#UTCH-2026-${String(id).padStart(4, '0')}`, titulo: data.titulo, categoria: data.categoria,
-    estado: data.enOficina ? 'bajo_custodia' : 'con_finder', resguardo: data.enOficina ? 'oficina' : 'persona',
-    custodia: data.enOficina ? data.caseta : null, gestor,
+    estado: resguardo === 'persona' ? 'con_finder' : 'bajo_custodia', resguardo,
+    custodia, gestor, docente: data.docente, ubicacionResguardo: data.ubicacionResguardo,
     fecha: new Date(`${data.fecha}T${data.hora || '00:00'}`).toISOString(), lugar: data.lugar, zona: 'Salones',
     foto: data.fotoPreview || null, descripcionPublica: data.descripcion,
   }
@@ -197,6 +229,11 @@ export async function crearExtravio(data) {
   const e = {
     id, folio: `#EXT-${id}`, titulo: data.titulo, categoria: data.categoria, estado: 'activo', autor: persona(yo),
     fecha: aISO(data.fecha), lugar: data.lugar, zona: 'Salones', descripcion: data.descripcion, alertas: data.alertas, fotos: [], foto: null,
+  }
+  if (data.imagen) {
+    const image = { id: nextId++, url: data.imagen.file ? await leerArchivo(data.imagen.file) : data.imagen.url, referenceImage: data.imagen.referenceImage }
+    e.fotos.push(image)
+    e.foto = image.url
   }
   db.extravios.unshift(e)
   return wait(e)
@@ -253,10 +290,10 @@ export async function misPublicaciones() {
 
 // ---------- Fotos de una publicación ----------
 // tipo: 'hallazgos' | 'extravios'
-export async function agregarFoto(tipo, id, archivo) {
-  if (!USE_MOCK) return real.agregarFoto(tipo, id, archivo)
+export async function agregarFoto(tipo, id, archivo, referenceImage = false) {
+  if (!USE_MOCK) return real.agregarFoto(tipo, id, archivo, referenceImage)
   const p = db[tipo].find((x) => x.id === Number(id))
-  const foto = { id: nextId++, url: await leerArchivo(archivo) }
+  const foto = { id: nextId++, url: await leerArchivo(archivo), referenceImage }
   p.fotos.push(foto)
   p.foto = p.fotos[0].url
   return wait(foto)
@@ -285,7 +322,8 @@ export async function crearReclamo(data) {
   const r = {
     id, folio: `#REC-${id}`, hallazgoId: h.id, titulo: h.titulo, estado: 'enviado',
     descripcionPrivada: data.descripcionPrivada, observaciones: '', creado: new Date().toISOString(),
-    evidencia: data.evidencia ? { nombre: data.evidencia.name } : null,
+    evidencias: await Promise.all((data.evidencias || []).map(async (file) => ({ id: nextId++, url: await leerArchivo(file), authorId: yo.id, createdAt: new Date().toISOString() }))),
+    actividad: [{ id: nextId++, kind: 'SUBMITTED', actorId: yo.id, actorName: yo.nombre, body: 'Reclamo registrado.', createdAt: new Date().toISOString() }],
     solicitante: { id: yo.id, nombre: yo.nombre, correo: yo.correo, matricula: yo.matricula, carrera: yo.carrera },
   }
   db.reclamos.unshift(r)
@@ -325,8 +363,9 @@ export async function getReclamo(id) {
   const resp = soyResponsable && !soySolicitante
   return wait({
     ...r,
-    hallazgo: h ? { id: h.id, folio: h.folio, titulo: h.titulo, foto: h.foto, lugar: h.lugar, custodia: h.custodia, resguardo: h.resguardo } : null,
+    hallazgo: h ? { ...h, permisos: permisosHallazgo(h) } : null,
     gestor: h?.gestor ?? null,
+    puedeAportar: activo,
     rolEnReclamo: soySolicitante ? 'solicitante' : 'responsable',
     permisos: {
       iniciarRevision: resp && r.estado === 'enviado',
@@ -374,7 +413,7 @@ export async function aprobarReclamo(id) {
   reclamo(id).estado = 'aprobado'; return wait({ ok: true })
 }
 export async function rechazarReclamo(id, observaciones) {
-  if (!USE_MOCK) return real.rechazarReclamo(id)
+  if (!USE_MOCK) return real.rechazarReclamo(id, observaciones)
   const r = reclamo(id); r.estado = 'rechazado'; r.observaciones = observaciones
   const h = hallazgoDe(r); if (h) h.estado = estadoLibre(h)
   return wait({ ok: true })
@@ -430,3 +469,86 @@ export async function auditoriaCSV() {
 }
 
 export async function logout() { if (!USE_MOCK) await real.logout() }
+
+export async function importarFoto(id, url, referenceImage = true) {
+  if (!USE_MOCK) return real.importarFoto(id, url, referenceImage)
+  const item = extravio(id)
+  const foto = { id: nextId++, url, referenceImage }
+  item.fotos.push(foto)
+  item.foto = item.fotos[0].url
+  return wait(foto)
+}
+
+// Expediente: el adaptador real aplica permisos y conserva las aportaciones.
+export async function getActividadReclamo(id, page = 0) {
+  if (!USE_MOCK) return real.getActividadReclamo(id, page)
+  await getReclamo(id)
+  const entries = [...(reclamo(id).actividad || [])].reverse()
+  return wait({ items: entries.slice(page * 20, (page + 1) * 20), page, hasNext: entries.length > (page + 1) * 20, total: entries.length })
+}
+export async function comentarReclamo(id, body, key) {
+  if (!USE_MOCK) return real.comentarReclamo(id, body, key)
+  const r = await getReclamo(id)
+  if (!r.puedeAportar) return fail('El expediente es de solo lectura.')
+  const item = { id: nextId++, kind: 'COMMENT', actorId: yo.id, actorName: yo.nombre, body, createdAt: new Date().toISOString() }
+  ;(reclamo(id).actividad ||= []).push(item)
+  return wait(item)
+}
+export async function getEvidenciasReclamo(id) {
+  if (!USE_MOCK) return real.getEvidenciasReclamo(id)
+  await getReclamo(id); return wait(reclamo(id).evidencias || [])
+}
+export async function agregarEvidenciaReclamo(id, file, key) {
+  if (!USE_MOCK) return real.agregarEvidenciaReclamo(id, file, key)
+  const r = await getReclamo(id)
+  if (!r.puedeAportar) return fail('El expediente es de solo lectura.')
+  if ((reclamo(id).evidencias || []).length >= 5) return fail('Máximo 5 evidencias.')
+  const image = { id: nextId++, url: await leerArchivo(file), authorId: yo.id, createdAt: new Date().toISOString() }
+  ;(reclamo(id).evidencias ||= []).push(image)
+  return wait(image)
+}
+export async function cambiarResguardo(id, data) {
+  if (!USE_MOCK) return real.cambiarResguardo(id, data)
+  const h = db.hallazgos.find((item) => item.id === Number(id))
+  if (!permisosHallazgo(h).cambiarResguardo) return fail('No puedes cambiar el resguardo.')
+  if (h.resguardo === 'oficina' && data.resguardo !== 'oficina') return fail('El objeto permanece en oficina.')
+  Object.assign(h, data, { custodia: data.resguardo === 'persona' ? null : data.resguardo === 'docente' ? `Con ${data.docente} · ${data.ubicacionResguardo || ''}` : data.ubicacionResguardo || 'Oficina de profesores · edificio I', estado: data.resguardo === 'persona' ? 'con_finder' : 'bajo_custodia' })
+  return wait(h)
+}
+
+// La estación real es persistente; el demo mantiene una bandeja separada por usuario.
+const mockNotifications = () => (db.notifications ||= []).filter((n) => n.recipientId === yo?.id && !n.clearedAt)
+export async function getNotificationSummary(signal) {
+  if (!USE_MOCK) return real.getNotificationSummary(signal)
+  const rows = mockNotifications(); return wait({ unread: rows.filter((n) => !n.readAt).length, total: rows.length })
+}
+export async function listNotifications({ filter = 'ALL', page = 0, pageSize = 20 } = {}, signal) {
+  if (!USE_MOCK) return real.listNotifications({ filter, page, pageSize }, signal)
+  const rows = mockNotifications().filter((n) => filter !== 'UNREAD' || !n.readAt)
+  return wait({ items: rows.slice(page * pageSize, (page + 1) * pageSize), total: rows.length, page, pageSize, totalPages: Math.ceil(rows.length / pageSize), hasNext: rows.length > (page + 1) * pageSize, hasPrevious: page > 0 })
+}
+export async function readNotification(id) {
+  if (!USE_MOCK) return real.readNotification(id)
+  const n = mockNotifications().find((row) => row.id === id)
+  if (!n) return fail('Notificación no disponible')
+  n.readAt ||= new Date().toISOString(); window.dispatchEvent(new Event('co-notifications-refresh')); return wait(n)
+}
+export async function clearReadNotifications() {
+  if (!USE_MOCK) return real.clearReadNotifications()
+  const rows = mockNotifications().filter((n) => n.readAt); rows.forEach((n) => { n.clearedAt = new Date().toISOString() }); window.dispatchEvent(new Event('co-notifications-refresh')); return wait({ cleared: rows.length })
+}
+
+export async function getPosiblesHallazgos(id, page = 0) {
+  if (!USE_MOCK) return real.getPosiblesHallazgos(id, page)
+  const source = extravio(id)
+  if (!source || source.autor.id !== yo?.id) return fail('Reporte no disponible.')
+  const rows = db.hallazgos.filter((h) => String(h.sourceLostReportId) === String(id) && h.estado !== 'retirado')
+  return wait({ items: rows.slice(page * 10, (page + 1) * 10), total: rows.length, page, totalPages: Math.ceil(rows.length / 10), hasNext: rows.length > (page + 1) * 10, hasPrevious: page > 0 })
+}
+
+export async function getPushConfig() { return USE_MOCK ? { enabled: false, applicationServerKey: null } : real.getPushConfig() }
+export async function getPushPreference() { return USE_MOCK ? { dailyReminders: 1, timeZone: 'America/Chihuahua', firstHour: 10, secondHour: 18 } : real.getPushPreference() }
+export const savePushPreference = (frequency) => USE_MOCK ? Promise.resolve({ dailyReminders: frequency, timeZone: 'America/Chihuahua', firstHour: 10, secondHour: 18 }) : real.savePushPreference(frequency)
+export const registerPush = (data) => real.registerPush(data)
+export const disablePush = (id) => real.disablePush(id)
+export const testPush = (id) => real.testPush(id)

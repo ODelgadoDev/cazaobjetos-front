@@ -1,6 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
 import { ToastProvider } from './components/Toast.jsx'
+import { ReportDraftProvider } from './context/ReportDraftContext.jsx'
+import { PushProvider } from './context/PushContext.jsx'
+import { NotificationProvider } from './context/NotificationContext.jsx'
+import Notificaciones from './pages/Notificaciones.jsx'
 import Layout from './components/Layout.jsx'
 import Login from './pages/Login.jsx'
 import Registro from './pages/Registro.jsx'
@@ -24,7 +28,7 @@ export default function App() {
   return (
     <ToastProvider>
       {usuario ? (
-        <Routes>
+        <ReportDraftProvider key={usuario.id}><PushProvider><NotificationProvider><Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Explorar />} />
             <Route path="/reclamo/:id" element={<Reclamo />} />
@@ -34,11 +38,12 @@ export default function App() {
             <Route path="/publicaciones" element={<MisPublicaciones />} />
             <Route path="/editar/:tipo/:id" element={<EditarPublicacion />} />
             <Route path="/extravio/:id" element={<DetalleExtravio />} />
+            <Route path="/notificaciones" element={<Notificaciones />} />
             <Route path="/cuenta" element={<MiCuenta />} />
             {esStaff && <Route path="/vigilancia" element={<Vigilancia />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
-        </Routes>
+        </Routes></NotificationProvider></PushProvider></ReportDraftProvider>
       ) : (
         <Routes>
           <Route path="/registro" element={<Registro />} />

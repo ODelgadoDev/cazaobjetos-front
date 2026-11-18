@@ -24,3 +24,14 @@ export const IconEdit = I(<><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13.5 6
 export const IconMail = I(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></>)
 export const IconLock = I(<><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></>)
 export const IconTrash = I(<><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></>)
+
+export const IconEye = I(<><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></>)
+export const IconEyeOff = I(<><path d="M3 3l18 18M9.9 5.2A12 12 0 0112 5c6.5 0 10 7 10 7a17 17 0 01-3.1 4M6.2 6.2A19 19 0 002 12s3.5 7 10 7a12 12 0 005.8-1.8M9.9 9.9a3 3 0 004.2 4.2" /></>)
+
+export const IconLogout = I(<><path d="M9 4H5a2 2 0 00-2 2v12a2 2 0 002 2h4M9 12h12M17 8l4 4-4 4" /></>)
+
+export const IconSun = I(<><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>)
+export const IconMoon = I(<path d="M20.8 13A9 9 0 0111 3.2 9 9 0 1020.8 13z" />)
+export const IconMonitor = I(<><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></>)
+
+export const IconBell = I(<><path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></>)
