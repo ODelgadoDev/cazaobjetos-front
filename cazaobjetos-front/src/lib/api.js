@@ -92,6 +92,9 @@ export async function registrar({ nombre, correo, password, carrera, edificio })
   return wait({ ok: true })
 }
 
+export const getRegistrationOptions = (signal) => USE_MOCK ? wait({ demoVerification: true }) : real.getRegistrationOptions(signal)
+export const activarCuentaPrueba = (correo) => USE_MOCK ? verificarCorreo(correo, CODIGO_MOCK) : real.activarCuentaPrueba(correo)
+
 export async function verificarCorreo(correo, codigo) {
   if (!USE_MOCK) return real.verificarCorreo(correo, codigo)
   const c = correo.trim().toLowerCase()

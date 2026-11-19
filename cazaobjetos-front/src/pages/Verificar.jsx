@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { USE_MOCK, reenviarCodigo, verificarCorreo } from '../lib/api.js'
+import useRegistrationOptions from '../lib/useRegistrationOptions.js'
+import { USE_MOCK, activarCuentaPrueba, reenviarCodigo, verificarCorreo } from '../lib/api.js'
 import { DOMINIO } from '../lib/constants.js'
 import AuthShell, { VolverAlLogin } from '../components/AuthShell.jsx'
 
@@ -19,26 +20,29 @@ export function useCuentaAtras() {
 export default function Verificar() {
   const navigate = useNavigate()
   const { state } = useLocation()
+  const { demoVerification, loading: loadingMode, error: modeError, retry: retryMode } = useRegistrationOptions()
   const [correo, setCorreo] = useState(state?.correo ?? '')
   const [codigo, setCodigo] = useState('')
   const [error, setError] = useState('')
-  const [aviso, setAviso] = useState(state?.recienCreada ? `Cuenta creada. Enviamos un código de verificación a ${state.correo}.` : '')
+  const [aviso, setAviso] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [espera, iniciarEspera] = useCuentaAtras()
 
-  useEffect(() => { if (state?.recienCreada) iniciarEspera() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (state?.recienCreada && !loadingMode && !modeError && !demoVerification) iniciarEspera() }, [loadingMode, modeError, demoVerification]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const correoOk = correo.trim().toLowerCase().endsWith(DOMINIO)
 
   async function verificar(e) {
     e.preventDefault()
+    if (enviando || loadingMode || modeError) return
     setError('')
     if (!correoOk) return setError(`Escribe tu correo institucional ${DOMINIO}.`)
-    if (!(USE_MOCK ? /^\d{6}$/ : /^[A-Za-z0-9_-]{43}$/).test(codigo.trim())) return setError('Copia el código completo recibido por correo.')
+    if (!demoVerification && !(USE_MOCK ? /^\d{6}$/ : /^[A-Za-z0-9_-]{43}$/).test(codigo.trim())) return setError('Copia el código completo recibido por correo.')
     setEnviando(true)
     try {
-      await verificarCorreo(correo.trim().toLowerCase(), codigo)
-      navigate('/', { replace: true, state: { correo: correo.trim().toLowerCase(), aviso: 'Correo verificado. Ya puedes iniciar sesión.' } })
+      if (demoVerification) await activarCuentaPrueba(correo)
+      else await verificarCorreo(correo.trim().toLowerCase(), codigo)
+      navigate('/login', { replace: true, state: { correo: correo.trim().toLowerCase(), aviso: demoVerification ? 'Cuenta de prueba activada. Ya puedes iniciar sesión.' : 'Correo verificado. Ya puedes iniciar sesión.' } })
     } catch (err) {
       setError(err.message)
       setEnviando(false)
@@ -57,21 +61,23 @@ export default function Verificar() {
   }
 
   return (
-    <AuthShell titulo="Verifica tu correo" intro="Ingresa el código que recibiste en tu correo institucional para activar tu cuenta." pie={<VolverAlLogin />}>
+    <AuthShell titulo="Verifica tu correo" intro={demoVerification ? "Activa tu cuenta de prueba sin código." : loadingMode ? "Preparando la verificación…" : "Ingresa el código que recibiste en tu correo institucional para activar tu cuenta."} pie={<VolverAlLogin />}>
       <form className="card" onSubmit={verificar} noValidate>
-        {aviso && <div className="notice notice--ok" role="status">{aviso}</div>}
+        {modeError && <div className="notice notice--peligro" role="alert"><span>{modeError}</span><button type="button" className="btn btn--secondary" onClick={retryMode}>Reintentar</button></div>}
+        {!loadingMode && !modeError && demoVerification && <div className="notice notice--info" role="status">Modo de prueba · no necesitas recibir un correo.</div>}
+        {!loadingMode && !modeError && (aviso || state?.recienCreada) && <div className="notice notice--ok" role="status">{aviso || (demoVerification ? 'Cuenta creada. Pulsa «Verificar correo» para activarla.' : `Cuenta creada. Enviamos un código de verificación a ${state.correo}.`)}</div>}
         <div className="field">
           <label htmlFor="v-correo">Correo institucional</label>
-          <input id="v-correo" className="input" type="email" autoComplete="email" value={correo} onChange={(e) => setCorreo(e.target.value)} />
+          <input id="v-correo" className="input" type="email" autoComplete="email" value={correo} disabled={enviando} onChange={(e) => { setCorreo(e.target.value); setError(''); setAviso('') }} />
         </div>
-        <CampoCodigo id="v-codigo" value={codigo} onChange={setCodigo} />
+        {!loadingMode && !modeError && !demoVerification && <CampoCodigo id="v-codigo" value={codigo} onChange={setCodigo} />}
         {error && <div className="notice notice--peligro" role="alert">{error}</div>}
-        <button className="btn btn--primary" disabled={enviando}>{enviando ? 'Verificando…' : 'Verificar correo'}</button>
-        <button type="button" className="btn btn--secondary" onClick={reenviar} disabled={espera > 0}>
+        <button className="btn btn--primary" disabled={enviando || loadingMode || !!modeError}>{enviando ? 'Verificando…' : 'Verificar correo'}</button>
+        {!loadingMode && !modeError && !demoVerification && <button type="button" className="btn btn--secondary" onClick={reenviar} disabled={espera > 0 || enviando}>
           {espera > 0 ? `Pedir otro código en ${espera} s` : 'Enviarme otro código'}
-        </button>
+        </button>}
       </form>
-      {USE_MOCK && <div className="notice notice--info"><span>Modo de prueba: el código es <b className="mono">123456</b>.</span></div>}
+      {USE_MOCK && !demoVerification && <div className="notice notice--info"><span>Modo de prueba: el código es <b className="mono">123456</b>.</span></div>}
     </AuthShell>
   )
 }

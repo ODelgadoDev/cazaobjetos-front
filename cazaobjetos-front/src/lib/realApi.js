@@ -93,6 +93,8 @@ export async function subirFotoPerfil(file) {
 }
 export const quitarFotoPerfil = async () => person(await request('DELETE', '/auth/me/photo'))
 export const registrar = ({ nombre, correo, password, carrera, edificio }) => request('POST', '/auth/register', { displayName: nombre, email: correo, password, degree: carrera, building: edificio })
+export const getRegistrationOptions = (signal) => request('GET', '/auth/registration-options', undefined, undefined, { signal })
+export const activarCuentaPrueba = (correo) => request('POST', '/auth/verify-email/demo', { email: correo.trim().toLowerCase() })
 export const verificarCorreo = (correo, codigo) => request('POST', '/auth/verify-email', { token: codigo.trim() })
 export const reenviarCodigo = (correo) => request('POST', '/auth/resend-verification', { email: correo })
 export const solicitarRecuperacion = (correo) => request('POST', '/auth/forgot-password', { email: correo })

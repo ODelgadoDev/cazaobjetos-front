@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import useRegistrationOptions from '../lib/useRegistrationOptions.js'
 import { registrar } from '../lib/api.js'
 import { studentNumber, profileError, PROFILE_FIELDS } from '../lib/profile.js'
 import { DOMINIO, MIN_PASSWORD } from '../lib/constants.js'
@@ -8,6 +9,7 @@ import AuthShell, { VolverAlLogin } from '../components/AuthShell.jsx'
 
 export default function Registro() {
   const navigate = useNavigate()
+  const { demoVerification, loading: loadingMode, error: modeError, retry: retryMode } = useRegistrationOptions()
   const [f, setF] = useState({ nombre: '', correo: '', carrera: '', edificio: '', password: '', confirmar: '' })
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -20,7 +22,7 @@ export default function Registro() {
 
   async function onSubmit(e) {
     e.preventDefault()
-    if (enviando) return
+    if (enviando || loadingMode || modeError) return
     setError('')
     const correo = f.correo.trim().toLowerCase()
     if (f.nombre.trim().length < 3) return setError('Escribe tu nombre completo.')
@@ -41,8 +43,9 @@ export default function Registro() {
   }
 
   return (
-    <AuthShell titulo="Crea tu cuenta" intro="Regístrate con tu correo institucional. Te enviaremos un código para confirmarlo." pie={<VolverAlLogin />}>
+    <AuthShell titulo="Crea tu cuenta" intro={demoVerification ? "Completa tus datos para crear tu cuenta de prueba." : loadingMode ? "Regístrate con tu correo institucional." : "Regístrate con tu correo institucional. Te enviaremos un código para confirmarlo."} pie={<VolverAlLogin />}>
       <form className="card" onSubmit={onSubmit} noValidate>
+        {modeError && <div className="notice notice--peligro" role="alert"><span>{modeError}</span><button type="button" className="btn btn--secondary" onClick={retryMode}>Reintentar</button></div>}
         <div className="field">
           <label htmlFor="r-nombre">Nombre completo</label>
           <input id="r-nombre" className="input" autoComplete="name" required minLength={3} maxLength={120} disabled={enviando} value={f.nombre} onChange={set('nombre')} />
@@ -71,7 +74,7 @@ export default function Registro() {
           <PasswordInput id="r-conf" className="input" visibilityLabel="confirmación de contraseña" autoComplete="new-password" required disabled={enviando} value={f.confirmar} onChange={set('confirmar')} />
         </div>
         {error && <div className="notice notice--peligro" role="alert">{error}</div>}
-        <button className="btn btn--primary" disabled={enviando}>{enviando ? 'Creando cuenta…' : 'Crear cuenta'}</button>
+        <button className="btn btn--primary" disabled={enviando || loadingMode || !!modeError}>{enviando ? 'Creando cuenta…' : 'Crear cuenta'}</button>
       </form>
     </AuthShell>
   )
