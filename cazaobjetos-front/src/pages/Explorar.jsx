@@ -54,17 +54,34 @@ export default function Explorar() {
 
   useEffect(() => {
     let vivo = true
+    let loading = false
     setCargando(true)
-    const t = setTimeout(() => {
-      const pedir = tab === 'extravios'
-        ? listExtravios({ q, categoria, zona, orden, estado, page, pageSize: PAGE_SIZE })
-        : listHallazgos({ q, categoria, zona, orden, page, pageSize: PAGE_SIZE })
-      pedir
-        .then((d) => { if (vivo) { setData(d); setError('') } })
-        .catch((e) => vivo && setError(e.message))
-        .finally(() => vivo && setCargando(false))
-    }, 250)
-    return () => { vivo = false; clearTimeout(t) }
+    async function load() {
+      if (!vivo || loading || document.hidden || !navigator.onLine) return
+      loading = true
+      try {
+        const filters = { q, categoria, zona, orden, estado, page, pageSize: PAGE_SIZE }
+        const result = await (tab === 'extravios' ? listExtravios(filters) : listHallazgos(filters))
+        if (vivo) { setData(result); setError('') }
+      } catch (error) {
+        if (vivo) setError(error.message)
+      } finally {
+        loading = false
+        if (vivo) setCargando(false)
+      }
+    }
+    const initial = setTimeout(load, 250)
+    const timer = setInterval(load, 5000)
+    window.addEventListener('focus', load)
+    window.addEventListener('online', load)
+    document.addEventListener('visibilitychange', load)
+    return () => {
+      vivo = false
+      clearTimeout(initial); clearInterval(timer)
+      window.removeEventListener('focus', load)
+      window.removeEventListener('online', load)
+      document.removeEventListener('visibilitychange', load)
+    }
   }, [tab, q, categoria, zona, orden, estado, page])
 
   const totalPag = Math.max(1, Math.ceil(data.total / PAGE_SIZE))
