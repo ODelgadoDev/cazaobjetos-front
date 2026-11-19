@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { listExtravios, listHallazgos } from '../lib/api.js'
 import { CATEGORIAS, UBICACIONES } from '../lib/constants.js'
 import ObjectCard, { ExtravioCard } from '../components/ObjectCard.jsx'
-import { IconInfo, IconSearch } from '../components/Icons.jsx'
+import { IconBox, IconSearch } from '../components/Icons.jsx'
 
 const PAGE_SIZE = 5
 const scrollPositions = new Map()
@@ -80,33 +80,40 @@ export default function Explorar() {
     })
     return () => cancelAnimationFrame(frame)
   }, [cargando, scrollKey])
+  const searchField = useRef(null)
+  function buscarMiObjeto() {
+    if (tab !== 'hallazgos' || page !== 1) {
+      restoreScroll.current = false
+      setData({ items: [], total: 0 })
+      setParams({ tab: 'encontrados' })
+    }
+    searchField.current?.focus()
+  }
+  function publicarExtravio() {
+    navigate('/reportar?tab=perdi', { state: { search: {
+      titulo: q.trim(), lugar: zona === 'Todos' ? '' : zona,
+      categoria: categoria === 'Todos' ? 'Electrónica' : categoria,
+    } } })
+  }
   const extr = tab === 'extravios'
 
   return (
     <>
+      <div className="explore-start" role="group" aria-label="¿Qué necesitas hacer?">
+        <button type="button" className="btn btn--primary" onClick={buscarMiObjeto}><IconSearch /> Perdí algo</button>
+        <Link className="btn btn--secondary" to="/reportar?tab=encontre"><IconBox /> Encontré algo</Link>
+      </div>
+
       <div className="tabs" role="tablist" aria-label="Qué quieres ver">
         <button role="tab" aria-selected={extr} className={extr ? 'is-active' : ''} onClick={() => cambiarTab('extravios')}>Se buscan</button>
         <button role="tab" aria-selected={!extr} className={!extr ? 'is-active' : ''} onClick={() => cambiarTab('hallazgos')}>Encontrados</button>
       </div>
 
-      {extr ? (
-        <div className="notice notice--info">
-          <IconInfo width={20} height={20} />
-          <span className="grow">¿Encontraste uno de estos? Publícalo para que su dueño pueda encontrarlo.</span>
-          <button className="btn btn--dark" onClick={() => navigate('/reportar')}>Reportar</button>
-        </div>
-      ) : (
-      <div className="notice notice--info">
-        <IconInfo width={20} height={20} />
-        <span className="grow">¿Perdiste algo y no lo ves?</span>
-        <button className="btn btn--dark" onClick={() => navigate('/reportar?tab=perdi')}>Reportar extravío</button>
-      </div>
-      )}
-
       <div className="field">
+        <label htmlFor="q">{extr ? 'Buscar en los extravíos' : '¿Qué perdiste?'}</label>
         <div style={{ position: 'relative' }}>
           <IconSearch width={18} height={18} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--texto-tenue)' }} />
-          <input id="q" aria-label="Buscar por palabra clave" className="input" style={{ paddingLeft: 38 }} placeholder="Buscar por palabra clave" value={q} onChange={(e) => changeFilter('q', e.target.value)} />
+          <input id="q" ref={searchField} className="input" style={{ paddingLeft: 38 }} placeholder="Ej. llaves, mochila azul…" value={q} onChange={(e) => changeFilter('q', e.target.value)} />
         </div>
       </div>
 
@@ -141,17 +148,24 @@ export default function Explorar() {
       {error && <div className="notice notice--peligro" role="alert">{error}</div>}
       {cargando && !data.items.length && <p className="empty">{extr ? 'Cargando reportes…' : 'Cargando objetos…'}</p>}
       {!cargando && !error && !data.items.length && (
-        <div className="card empty"><p>{extr ? 'No hay reportes de extravío con esos filtros.' : 'No hay hallazgos con esos filtros.'}</p><div className="btn-row"><button type="button" className="btn btn--secondary" onClick={() => { restoreScroll.current = false; setParams(extr ? {} : { tab: 'encontrados' }, { replace: true }) }}>Quitar filtros</button><button type="button" className="btn btn--primary" onClick={() => navigate('/reportar?tab=perdi', { state: { search: { titulo: q, lugar: zona === 'Todos' ? '' : zona, categoria: categoria === 'Todos' ? 'Electrónica' : categoria } } })}>Reportar mi extravío</button></div></div>
+        <div className="card empty">
+          <p>{extr ? 'No hay reportes de extravío con esos filtros.' : 'No encontramos un hallazgo que coincida con tu búsqueda.'}</p>
+          <button type="button" className="btn btn--secondary" onClick={() => { restoreScroll.current = false; setParams(extr ? {} : { tab: 'encontrados' }, { replace: true }) }}>Quitar filtros</button>
+        </div>
       )}
       <div className="cards">
         {data.items.map((it) => (extr ? <ExtravioCard key={it.id} e={it} /> : <ObjectCard key={it.id} h={it} />))}
       </div>
 
-      <div className="pager">
+      {totalPag > 1 && <div className="pager">
         <button className="btn btn--secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>‹ Anterior</button>
         <span className="mono muted">{page} / {totalPag}</span>
         <button className="btn btn--secondary" disabled={page >= totalPag} onClick={() => setPage(page + 1)}>Siguiente ›</button>
-      </div>
+      </div>}
+      {!cargando && !error && (!extr || !data.items.length) && <div className="card publish-loss">
+        <strong>{data.items.length ? '¿Ninguno es tuyo?' : '¿Quieres que otros puedan buscar tu objeto?'}</strong>
+        <button type="button" className="btn btn--primary" onClick={publicarExtravio}>Publicar mi extravío</button>
+      </div>}
     </>
   )
 }

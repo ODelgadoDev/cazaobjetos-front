@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useAuth } from './AuthContext.jsx'
 import * as api from '../lib/api.js'
 import { applicationKey, bindPush, clearPushBinding, optedIn, pushRegistration, pushSupported, pushEpoch, rememberPush, silencePushDevice, subscribePush } from '../lib/pushDevice.js'
@@ -16,7 +16,17 @@ export function PushProvider({ children }) {
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
   const [installed, setInstalled] = useState(() => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true)
-  const [dismissed, setDismissed] = useState(false)
+  const invitationKey = `co_push_first_claim:${userId}`
+  const [invitationClaim, setInvitationClaim] = useState(() => {
+    try { return localStorage.getItem(invitationKey) } catch { return null }
+  })
+  function saveInvitation(value) {
+    setInvitationClaim(value)
+    try { localStorage.setItem(invitationKey, value) } catch { /* Keep the decision for this session. */ }
+  }
+  function claimSubmitted(id) {
+    if (!invitationClaim && !device && permission !== 'denied' && supported) saveInvitation(String(id))
+  }
   const live = useRef(true)
   const setup = useRef(null)
   const supported = !api.USE_MOCK && pushSupported()
@@ -71,7 +81,7 @@ export function PushProvider({ children }) {
       const saved = await api.registerPush({ expectedUserId: userId, ...subscription.toJSON() })
       if (!live.current || pushEpoch() !== startEpoch || saved.userId !== userId) return
       await bindPush(reg, userId, saved.bindingToken)
-      if (live.current) { rememberPush(userId); setDevice(saved); setDismissed(false) }
+      if (live.current) { rememberPush(userId); setDevice(saved); saveInvitation('dismissed') }
     } catch (e) { if (live.current) setError(e.status ? e.message : 'No se pudieron conectar los avisos del dispositivo. Comprueba la conexión e inténtalo de nuevo.') }
     finally { if (live.current) setBusy(false) }
   }
@@ -96,5 +106,5 @@ export function PushProvider({ children }) {
     catch (e) { if (live.current) setError(e.message); return false }
     finally { if (live.current) setBusy(false) }
   }
-  return <PushContext.Provider value={{ supported, config, preference, device, permission, busy, loading, error, enable, disable, saveFrequency, test, installed, dismissed, dismiss: () => setDismissed(true) }}>{children}</PushContext.Provider>
+  return <PushContext.Provider value={{ supported, config, preference, device, permission, busy, loading, error, enable, disable, saveFrequency, test, installed, invitationClaim, claimSubmitted, dismiss: () => saveInvitation('dismissed') }}>{children}</PushContext.Provider>
 }

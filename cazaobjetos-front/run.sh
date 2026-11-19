@@ -36,8 +36,8 @@ if ! curl --fail --silent --max-time 2 http://127.0.0.1:8080/api/v1/health >/dev
     curl --fail --silent --max-time 2 http://127.0.0.1:8080/api/v1/health >/dev/null || { echo 'Revisa backend-local.log: el backend no respondió a tiempo.' >&2; exit 1; }
 fi
 
-echo "CazaObjetos: http://127.0.0.1:${FRONTEND_PORT:-5173}"
+echo "CazaObjetos: http://127.0.0.1:${FRONTEND_PORT:-4173}"
 echo 'Buzón de pruebas: http://127.0.0.1:8025 · Ctrl+C para detener la app.'
-setsid env VITE_API_URL=/api/v1 npm run dev -- --host 127.0.0.1 --port "${FRONTEND_PORT:-5173}" --strictPort &
+setsid env VITE_API_URL=/api/v1 npm run dev -- --host 127.0.0.1 --port "${FRONTEND_PORT:-4173}" --strictPort &
 frontend_pid=$!
 wait "$frontend_pid"

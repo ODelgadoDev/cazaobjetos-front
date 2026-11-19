@@ -1,3 +1,4 @@
+import { usePush } from '../context/PushContext.jsx'
 import EvidencePicker from '../components/EvidencePicker.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -18,6 +19,7 @@ export default function Reclamo() {
   const [params, setParams] = useSearchParams()
   const applying = params.get('solicitar') === '1'
   const toast = useToast()
+  const { claimSubmitted } = usePush()
   const { usuario } = useAuth()
   const requestKey = useRef(crypto.randomUUID())
   const [losses, setLosses] = useState([])
@@ -64,7 +66,8 @@ export default function Reclamo() {
     setError('')
     try {
       const resultado = await crearReclamo({ hallazgoId: h.id, descripcionPrivada: detalles.trim(), declaracion: declaro, evidencias, lostReportId, requestKey: requestKey.current })
-      toast('Solicitud guardada. Continúa en los comentarios del expediente.')
+      claimSubmitted(resultado.id)
+      toast('Solicitud enviada.')
       navigate(`/reclamos/${resultado.id}`)
     } catch (e) {
       if (e.status === 409) {

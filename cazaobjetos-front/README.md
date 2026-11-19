@@ -2,16 +2,16 @@
 
 ## Arrancar la app local integrada
 
-La integración local usa la rama `pantallas-mvp` del frontend y el backend Java de CazaObjetos. El launcher busca el backend en `~/Documentos/cazaobjetos-backend` cuando ambos repositorios están juntos en Documentos.
+Esta copia usa la rama local `ux/primer-uso` y el backend Java de CazaObjetos. Prueba las entradas «Perdí algo» y «Encontré algo», las secciones desplegables del reclamo en móvil y la invitación de avisos después de enviar una solicitud. El launcher busca el backend en `~/Documentos/cazaobjetos-backend` cuando ambos repositorios están juntos en Documentos.
 
 ```bash
-cd ~/Documentos/cazaobjetos-front/cazaobjetos-front
+cd ~/Documentos/cazaobjetos-front-primer-uso/cazaobjetos-front
 ./run.sh
 ```
 
-Requiere Node.js, npm, curl, setsid y los requisitos del launcher del backend (Java 21, Maven cuando se recompila y Docker Compose). Instala dependencias cuando hace falta, inicia el backend si está detenido y levanta Vite en http://127.0.0.1:5173. Si el backend está en otra carpeta, configura BACKEND_DIR. Ctrl+C cierra los procesos iniciados por este launcher. PostgreSQL y Mailpit conservan su estado. Una instancia de backend que ya estuviera activa continúa bajo el control de quien la inició.
+Requiere Node.js, npm, curl, setsid y los requisitos del launcher del backend (Java 21, Maven cuando se recompila y Docker Compose). Instala dependencias cuando hace falta, inicia el backend si está detenido y levanta Vite en http://127.0.0.1:4173. Puedes cambiar el puerto con FRONTEND_PORT. Esta variante comparte cuentas, publicaciones y reclamos con la aplicación habitual del puerto 5173. Si el backend está en otra carpeta, configura BACKEND_DIR. Ctrl+C cierra los procesos iniciados por este launcher. PostgreSQL y Mailpit conservan su estado. Una instancia de backend que ya estuviera activa continúa bajo el control de quien la inició.
 
-El proxy de Vite envía `/api` a http://127.0.0.1:8080. `.env.local` contiene `VITE_API_URL=/api/v1`. En el `.env` del backend se configuraron orígenes locales explícitos para 127.0.0.1/localhost en 5173 y 4173. Usa el mismo host al navegar para conservar las cookies. Las fotos se consultan por la misma API autenticada.
+El proxy de Vite envía `/api` a http://127.0.0.1:8080. El launcher establece `VITE_API_URL=/api/v1`. En el `.env` del backend se configuraron orígenes locales explícitos para 127.0.0.1/localhost en 5173 y 4173. Usa el mismo host al navegar para conservar las cookies. Las fotos se consultan por la misma API autenticada.
 
 Cuentas demo del backend: `alumno.demo@utch.edu.mx`, `reclamante.demo@utch.edu.mx`, `docente.demo@utch.edu.mx` y `secretaria.demo@utch.edu.mx`. Usan DEV_PASSWORD de la configuración local del backend cuando se crean. Cambiar esa variable después no cambia sus contraseñas existentes.
 

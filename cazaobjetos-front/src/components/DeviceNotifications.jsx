@@ -1,16 +1,26 @@
-import { Link } from 'react-router-dom'
 import { usePush } from '../context/PushContext.jsx'
 import { useToast } from './Toast.jsx'
 import { IconBell } from './Icons.jsx'
-export function PushInvitation() {
+const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+
+export function PushInvitation({ claimId }) {
   const push = usePush()
-  if (!push.installed || push.dismissed || push.device || push.loading || !push.supported || !push.config?.enabled || push.permission === 'denied') return null
-  return <aside className="notice notice--info push-invitation"><IconBell width={22} height={22} /><div><strong>Recibe las novedades en tu dispositivo</strong><p>Activa los avisos para enterarte aunque la app esté cerrada. Tú eliges los recordatorios.</p><div className="btn-row"><button type="button" className="btn btn--primary" disabled={push.busy} onClick={push.enable}>Activar notificaciones</button><button type="button" className="btn btn--secondary" onClick={push.dismiss}>Ahora no</button><Link className="link-green" to="/notificaciones">Ver opciones</Link></div>{push.error && <p role="alert">{push.error}</p>}</div></aside>
+  if (push.invitationClaim !== String(claimId) || push.device || push.loading || !push.supported ||
+      !push.config?.enabled || push.permission === 'denied' || (ios && !push.installed)) return null
+  return <aside className="notice notice--info push-invitation" aria-label="Avisos del reclamo">
+    <IconBell width={22} height={22} />
+    <div><strong>Te podemos avisar cuando respondan a tu solicitud.</strong>
+      <div className="btn-row">
+        <button type="button" className="btn btn--primary" disabled={push.busy} onClick={push.enable}>Activar avisos</button>
+        <button type="button" className="btn btn--secondary" disabled={push.busy} onClick={push.dismiss}>Ahora no</button>
+      </div>
+      {push.error && <p role="alert">{push.error}</p>}
+    </div>
+  </aside>
 }
 export default function DeviceNotifications() {
   const push = usePush()
   const toast = useToast()
-  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
   return <details className="card device-notifications" aria-label="Notificaciones del dispositivo">
     <summary className="push-options-summary"><span><IconBell width={20} height={20} /> Avisos en este dispositivo</span><span className={`chip ${push.device ? 'chip--ok' : 'chip--cat'}`}>{push.loading ? 'Preparando…' : push.device ? 'Activadas' : push.permission === 'denied' ? 'Bloqueadas' : 'Configurar'}</span></summary>
     <div className="device-notifications__body">

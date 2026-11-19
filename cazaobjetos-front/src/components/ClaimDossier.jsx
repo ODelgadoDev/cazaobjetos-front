@@ -3,7 +3,8 @@ import { agregarEvidenciaReclamo, comentarReclamo, getActividadReclamo, getEvide
 import { useNotifications } from '../context/NotificationContext.jsx'
 import { useToast } from './Toast.jsx'
 import EvidencePicker from './EvidencePicker.jsx'
-import { IconClipboard, IconImage, IconSend } from './Icons.jsx'
+import ClaimSection from './ClaimSection.jsx'
+import { IconSend } from './Icons.jsx'
 
 const labels = { SUBMITTED: 'Solicitud', ACCEPTED: 'Aceptado', REJECTED: 'Rechazado', CANCELLED: 'Cancelado', COMPLETED: 'Entregado', CLOSED: 'Cerrado', COMMENT: 'Comentario', EVIDENCE_ADDED: 'Evidencia', CUSTODY_CHANGED: 'Resguardo', PUBLICATION_EDITED: 'Ficha actualizada', DELEGATED: 'Responsable', HISTORY_IMPORTED: 'Expediente previo' }
 const when = (date) => new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(date))
@@ -17,7 +18,7 @@ function Snapshot({ value }) {
   const fields = [['title', 'Objeto'], ['description', 'Descripción'], ['foundLocation', 'Lugar del hallazgo'], ['lostLocation', 'Lugar del extravío'], ['custody', 'Resguardo'], ['teacherName', 'Docente de referencia'], ['custodyLocation', 'Ubicación de resguardo']]
   return <details className="claim-snapshot"><summary>Ver ficha registrada</summary>{snapshots.map(([label, record]) => <div key={label}><strong>{label}</strong><dl>{fields.filter(([key]) => record[key]).map(([key, title]) => <div key={key}><dt>{title}</dt><dd>{key === 'custody' ? custody[record[key]] : record[key]}</dd></div>)}</dl></div>)}</details>
 }
-export default function ClaimDossier({ id, canContribute, onUpdated }) {
+export default function ClaimDossier({ id, description, canContribute, onUpdated, children }) {
   const toast = useToast()
   const { version } = useNotifications()
   const [hasUpdates, setHasUpdates] = useState(false)
@@ -82,8 +83,12 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
   }
   return (
     <div className="claim-dossier">
-      <section className="card" aria-label="Evidencias privadas" id="claim-evidence">
-        <h2 className="section-title"><IconImage width={20} height={20} /> Evidencias privadas <span className="folio">{images.length}/5</span></h2>
+      {error && <div className="notice notice--peligro" role="alert">{error}</div>}
+      {hasUpdates && <div className="notice notice--info" role="status"><span>Hay novedades en este expediente.</span><button type="button" className="btn btn--secondary" disabled={saving || loading} onClick={async () => { await load(); onUpdated() }}>Ver novedades</button></div>}
+      <ClaimSection id="claim-evidence" title={`Pruebas de propiedad · ${images.length} ${images.length === 1 ? 'imagen' : 'imágenes'}`}>
+        <h3>Descripción del solicitante</h3>
+        <p className="claim-private-description">{description}</p>
+        <h3>Imágenes privadas</h3>
         <p className="account-help">Solo las ven el solicitante y el responsable. Las imágenes enviadas se conservan como parte del expediente.</p>
         {loading && !images.length ? <p className="muted">Cargando evidencias…</p> : !images.length && <p className="muted">Sin imágenes adjuntas.</p>}
         <div className="evidence-grid">{images.map((image, index) => <figure key={image.id} className="evidence-preview">
@@ -94,10 +99,14 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
           <EvidencePicker files={files} onChange={(next) => { setFiles(next); fileKey.current = crypto.randomUUID() }} max={1} disabled={saving || loading} />
           {!!files.length && <div className="btn-row"><button type="button" className="btn btn--secondary" disabled={saving} onClick={() => setFiles([])}>Cancelar evidencia</button><button type="button" className="btn btn--primary" disabled={saving} onClick={upload}>{saving ? 'Guardando…' : 'Guardar evidencia'}</button></div>}
         </div>}
-      </section>
-      <section className="card" aria-label="Comentarios e historial" id="claim-comments">
-        <div className="claim-section-heading"><h2 className="section-title"><IconClipboard width={20} height={20} /> Comentarios e historial</h2><button type="button" className="btn btn--secondary" onClick={load} disabled={saving || loading}>{loading ? 'Actualizando…' : 'Actualizar expediente'}</button></div>
-        {hasUpdates && <div className="notice notice--info" role="status"><span>Hay novedades en este expediente.</span><button type="button" className="btn btn--secondary" disabled={saving || loading} onClick={async () => { await load(); onUpdated() }}>Ver novedades</button></div>}
+        {children}
+      </ClaimSection>
+      <ClaimSection id="claim-comments" title="Comentarios e historial">
+        <button type="button" className="btn btn--secondary" onClick={async () => { await load(); onUpdated() }} disabled={saving || loading}>{loading ? 'Actualizando…' : 'Actualizar expediente'}</button>
+        {canContribute ? <form className="claim-comment-form" onSubmit={send}>
+          <div className="field"><label htmlFor={`comment-${id}`}>Publicar comentario</label><textarea id={`comment-${id}`} className="textarea" value={body} maxLength={2000} disabled={saving} onChange={(event) => setBody(event.target.value)} placeholder="Pide una prueba, responde una pregunta o acuerda dónde entregar el objeto…" /><span className="help">{body.length}/2000 · SOLO LOS PARTICIPANTES DEL RECLAMO</span></div>
+          <button className="btn btn--primary" disabled={!body.trim() || saving}><IconSend width={18} height={18} /> {saving ? 'Guardando…' : 'Publicar comentario'}</button>
+        </form> : <div className="notice notice--info" role="status">Este reclamo finalizó. Puedes consultar su historial y evidencias; ya no admite comentarios ni archivos nuevos.</div>}
         {activity.hasNext && <button type="button" className="btn btn--secondary" onClick={older} disabled={olderLoading}>{olderLoading ? 'Cargando…' : 'Ver registros anteriores'}</button>}
         <ol className="claim-timeline">{[...activity.items].reverse().map((entry) => <li key={entry.id} className={`claim-entry${entry.kind === 'COMMENT' ? ' claim-entry--comment' : ''}`}>
           <header><span className="claim-entry__kind">{labels[entry.kind] || entry.kind}</span><span>{entry.actorName}</span><time dateTime={entry.createdAt}>{when(entry.createdAt)}</time></header>
@@ -106,12 +115,7 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
           {entry.evidenceId && images.some((image) => image.id === entry.evidenceId) && <a className="link-green" href={images.find((image) => image.id === entry.evidenceId).url} target="_blank" rel="noreferrer">Abrir evidencia registrada</a>}
         </li>)}</ol>
         {!loading && !activity.items.length && <p className="muted">Todavía no hay aportaciones en este expediente.</p>}
-        {error && <div className="notice notice--peligro" role="alert">{error}</div>}
-        {canContribute ? <form className="claim-comment-form" onSubmit={send}>
-          <div className="field"><label htmlFor={`comment-${id}`}>Publicar comentario</label><textarea id={`comment-${id}`} className="textarea" value={body} maxLength={2000} disabled={saving} onChange={(event) => setBody(event.target.value)} placeholder="Pide una prueba, responde una pregunta o acuerda dónde entregar el objeto…" /><span className="help">{body.length}/2000 · SOLO LOS PARTICIPANTES DEL RECLAMO</span></div>
-          <button className="btn btn--primary" disabled={!body.trim() || saving}><IconSend width={18} height={18} /> {saving ? 'Guardando…' : 'Publicar comentario'}</button>
-        </form> : <div className="notice notice--info" role="status">Este reclamo finalizó. Puedes consultar su historial y evidencias; ya no admite comentarios ni archivos nuevos.</div>}
-      </section>
+      </ClaimSection>
     </div>
   )
 }

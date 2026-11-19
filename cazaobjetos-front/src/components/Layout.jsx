@@ -3,7 +3,6 @@ import { useEffect } from 'react'
 import { useNotifications } from '../context/NotificationContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useOnline } from '../lib/pwa.js'
-import { PushInvitation } from './DeviceNotifications.jsx'
 import AppearanceControl from './AppearanceControl.jsx'
 import InstitutionBrand from './InstitutionBrand.jsx'
 import LogoutButton from './LogoutButton.jsx'
@@ -92,7 +91,6 @@ export default function Layout() {
             Sin conexión. Verás lo último que cargaste, pero no podrás enviar ni revisar solicitudes hasta reconectarte.
           </div>
         )}
-        {pathname !== '/notificaciones' && <PushInvitation />}
         <Outlet />
       </main>
 
