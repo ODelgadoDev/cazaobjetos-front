@@ -1,0 +1,17 @@
+.photo-picker > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding-block: 8px;
+}
+
+.photo-picker .image-attachment--compact {
+  gap: 10px;
+  padding: 12px;
+  margin-block-start: 4px;
+}
+
+.image-attachment--compact .image-attachment__file,
+.image-attachment--compact .image-attachment__paste {
+  padding: 10px;
+  gap: 6px;
+}

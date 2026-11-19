@@ -1,0 +1,20 @@
+.claim-form-simple > :is(h2, p), .claim-participants { margin: 0; }
+.claim-form-simple > h2, .claim-summary > h2 { overflow-wrap: anywhere; }
+.claim-participants { display: grid; gap: 5px; }
+.claim-participants > div { display: flex; gap: 8px; align-items: baseline; }
+.claim-participants dt { color: var(--texto-tenue); }
+.claim-participants dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.claim-simple-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.claim-simple-actions:empty { display: none; }
+.claim-attachments { border: 1px solid var(--linea); border-radius: 8px; padding: 8px 12px; }
+.claim-attachments > summary { cursor: pointer; font-size: .9rem; font-weight: 600; }
+.claim-attachments > summary svg { vertical-align: text-bottom; margin-right: 4px; }
+.inline-field { display: flex; flex-wrap: wrap; gap: 8px; }
+.inline-field .input { flex: 1 1 160px; min-width: 0; }
+.attachment-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.attachment-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; overflow-wrap: anywhere; }
+.attachment-list button { background: transparent; border: 0; padding: 4px; }
+.notifications-simple .notification-card { padding: 12px 16px; align-items: center; }
+.notifications-simple .notification-card__content { gap: 3px; }
+.notifications-simple .notification-card__arrow { margin-top: 0; }
+.notifications-simple .notification-toolbar { flex-wrap: nowrap; }

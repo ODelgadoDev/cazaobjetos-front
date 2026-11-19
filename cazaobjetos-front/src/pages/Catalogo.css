@@ -1,0 +1,18 @@
+.catalog-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.catalog-search__field { position: relative; }
+.catalog-search__field svg {
+  position: absolute;
+  inset: 50% auto auto 12px;
+  transform: translateY(-50%);
+  color: var(--texto-tenue);
+  pointer-events: none;
+}
+.catalog-search__field .input { padding-inline-start: 38px; }
+.catalog-search .btn { min-width: 74px; }
+.catalog-filters[hidden] { display: none; }

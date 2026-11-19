@@ -2,16 +2,16 @@
 
 ## Arrancar la app local integrada
 
-Esta copia usa la rama local `ux/primer-uso` y el backend Java de CazaObjetos. Prueba las entradas «Perdí algo» y «Encontré algo», las secciones desplegables del reclamo en móvil y la invitación de avisos después de enviar una solicitud. El launcher busca el backend en `~/Documentos/cazaobjetos-backend` cuando ambos repositorios están juntos en Documentos.
+Esta rama usa el backend de prueba de `cazaobjetos-backend-primer-uso` con la migración V14.
 
 ```bash
 cd ~/Documentos/cazaobjetos-front-primer-uso/cazaobjetos-front
 ./run.sh
 ```
 
-Requiere Node.js, npm, curl, setsid y los requisitos del launcher del backend (Java 21, Maven cuando se recompila y Docker Compose). Instala dependencias cuando hace falta, inicia el backend si está detenido y levanta Vite en http://127.0.0.1:4173. Puedes cambiar el puerto con FRONTEND_PORT. Esta variante comparte cuentas, publicaciones y reclamos con la aplicación habitual del puerto 5173. Si el backend está en otra carpeta, configura BACKEND_DIR. Ctrl+C cierra los procesos iniciados por este launcher. PostgreSQL y Mailpit conservan su estado. Una instancia de backend que ya estuviera activa continúa bajo el control de quien la inició.
+El frontend abre en http://127.0.0.1:4173 y su API usa el puerto 18090. El launcher reutiliza una API activa. Si tiene que iniciarla, el backend de prueba requiere un PostgreSQL preparado y su archivo local `.env`. Se puede configurar otro backend compatible mediante `CAZA_API_PROXY`.
 
-El proxy de Vite envía `/api` a http://127.0.0.1:8080. El launcher establece `VITE_API_URL=/api/v1`. En el `.env` del backend se configuraron orígenes locales explícitos para 127.0.0.1/localhost en 5173 y 4173. Usa el mismo host al navegar para conservar las cookies. Las fotos se consultan por la misma API autenticada.
+La prueba local utiliza una copia independiente de la base habitual. Las operaciones que hagas en esta variante se guardan en esa copia.
 
 Cuentas demo del backend: `alumno.demo@utch.edu.mx`, `reclamante.demo@utch.edu.mx`, `docente.demo@utch.edu.mx` y `secretaria.demo@utch.edu.mx`. Usan DEV_PASSWORD de la configuración local del backend cuando se crean. Cambiar esa variable después no cambia sus contraseñas existentes.
 
@@ -67,8 +67,8 @@ El MVP permite aceptar/rechazar un reclamo, cancelarlo y confirmar su recepción
 - Es una PWA instalable: manifest, íconos y service worker los genera `vite-plugin-pwa` (config en `vite.config.js`, íconos en `public/icons/`).
 - El service worker también se habilita en desarrollo para las pruebas de Web Push. Para comprobar el paquete de producción:
   ```bash
-  npm run build
-  npm run preview
+  VITE_API_URL=/api/v1 npm run build
+  CAZA_API_PROXY=http://127.0.0.1:18090 npm run preview
   ```
   y abre http://localhost:4173. El botón «Instalar» aparece en el inicio de sesión y en la barra superior; abre el diálogo nativo cuando el navegador lo permite y muestra instrucciones manuales en los demás casos.
 - Para instalarla en un celular necesita **HTTPS**: súbanla a Vercel o Netlify.

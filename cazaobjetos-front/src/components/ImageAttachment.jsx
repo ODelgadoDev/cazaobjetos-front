@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { IconImage, IconUpload, IconX } from './Icons.jsx'
+import './ImageAttachment.css'
 
-export default function ImageAttachment({ value, onChange, disabled = false }) {
+export default function ImageAttachment({ value, onChange, disabled = false, compact = false }) {
   const inputId = useId()
   const pasteArea = useRef(null)
   const [mode, setMode] = useState('archivo')
@@ -22,9 +23,9 @@ export default function ImageAttachment({ value, onChange, disabled = false }) {
       setError('Usa una imagen JPG o PNG.')
       return
     }
-    if (file.size > 5 * 1024 * 1024) { setError('La imagen debe pesar hasta 5 MB.'); return }
+    if (!file.size || file.size > 5 * 1024 * 1024) { setError('Elige una imagen de hasta 5 MB.'); return }
     setError('')
-    onChange({ file, referenceImage: value?.referenceImage ?? true })
+    onChange({ file, referenceImage: value?.referenceImage ?? !compact })
   }
 
   function paste(event) {
@@ -76,25 +77,26 @@ export default function ImageAttachment({ value, onChange, disabled = false }) {
     } catch { setError('Pega el enlace HTTPS directo de la imagen.') }
   }
 
-  return (
-    <section className="image-attachment" aria-labelledby={`${inputId}-title`} onPaste={paste}>
-      <div className="image-attachment__heading">
+  const picker = (
+    <section className={`image-attachment${compact ? ' image-attachment--compact' : ''}`}
+      aria-label={compact ? 'Adjuntar imagen' : undefined} aria-labelledby={compact ? undefined : `${inputId}-title`} onPaste={paste}>
+      {!compact && <div className="image-attachment__heading">
         <h2 id={`${inputId}-title`}>¿Tienes una foto?</h2>
         <span className="image-attachment__optional">Opcional</span>
-      </div>
-      <p className="muted">Puedes usar una foto tuya o una imagen de un objeto parecido, de la misma marca o modelo.</p>
+      </div>}
+      {!compact && <p className="muted">Puedes usar una foto tuya o una imagen de un objeto parecido, de la misma marca o modelo.</p>}
       <div className="image-attachment__methods" role="group" aria-label="Cómo agregar la imagen">
         {['archivo', 'pegar', 'enlace'].map((option) => (
           <button key={option} type="button" className={`filter ${mode === option ? 'is-active' : ''}`}
             aria-pressed={mode === option} onClick={() => { setMode(option); setError('') }} disabled={disabled}>
-            {{ archivo: 'Subir imagen', pegar: 'Pegar imagen', enlace: 'Enlace de internet' }[option]}
+            {{ archivo: compact ? 'Archivo' : 'Subir imagen', pegar: 'Pegar imagen', enlace: compact ? 'Enlace' : 'Enlace de internet' }[option]}
           </button>
         ))}
       </div>
       {mode === 'archivo' && (
         <div className="image-attachment__file">
-          <IconUpload width={26} height={26} />
-          <label htmlFor={inputId}>Elegir una imagen del dispositivo</label>
+          {!compact && <IconUpload width={26} height={26} />}
+          <label htmlFor={inputId}>{compact ? 'Elegir imagen' : 'Elegir una imagen del dispositivo'}</label>
           <input id={inputId} type="file" accept="image/jpeg,image/png" disabled={disabled}
             onChange={(event) => { selectFile(event.target.files?.[0]); event.target.value = '' }} />
           <span className="help">JPG o PNG · hasta 5 MB</span>
@@ -102,8 +104,8 @@ export default function ImageAttachment({ value, onChange, disabled = false }) {
       )}
       {mode === 'pegar' && (
         <div className="image-attachment__paste" tabIndex={0} ref={pasteArea} aria-label="Área para pegar una imagen copiada">
-          <IconImage width={28} height={28} />
-          <p>Copia la imagen en tu navegador. Haz clic aquí y presiona <kbd>Ctrl</kbd> + <kbd>V</kbd>.</p>
+          {!compact && <IconImage width={28} height={28} />}
+          {compact ? <p>Pega una imagen copiada.</p> : <p>Copia la imagen en tu navegador. Haz clic aquí y presiona <kbd>Ctrl</kbd> + <kbd>V</kbd>.</p>}
           <button type="button" className="btn btn--secondary" onClick={readClipboard} disabled={disabled}>Pegar desde el portapapeles</button>
         </div>
       )}
@@ -115,20 +117,25 @@ export default function ImageAttachment({ value, onChange, disabled = false }) {
               value={draftUrl} onChange={(event) => setDraftUrl(event.target.value)} disabled={disabled} />
             <button type="button" className="btn btn--secondary" onClick={useUrl} disabled={disabled || !draftUrl.trim()}>Usar enlace</button>
           </div>
-          <span className="help">Usa «Copiar dirección de imagen» en tu navegador.</span>
+          {!compact && <span className="help">Usa «Copiar dirección de imagen» en tu navegador.</span>}
         </div>
       )}
       {value && (
         <div className="image-attachment__selection">
           {preview ? <img src={preview} alt="Vista previa de la imagen elegida" /> : <IconImage width={32} height={32} />}
-          <div><strong>{value.file?.name || 'Imagen desde enlace'}</strong><span>{value.url || 'Lista para adjuntar al reporte'}</span></div>
+          <div><strong>{value.file?.name || 'Imagen desde enlace'}</strong>{!compact && <span>{value.url || 'Lista para adjuntar al reporte'}</span>}</div>
           <button type="button" className="image-attachment__remove" onClick={() => onChange(null)} disabled={disabled} aria-label="Quitar imagen elegida"><IconX /></button>
         </div>
       )}
       {value && <label className="check"><input type="checkbox" checked={value.referenceImage}
         onChange={(event) => onChange({ ...value, referenceImage: event.target.checked })} disabled={disabled} />
-        <span>Es una imagen de referencia de un objeto parecido.</span></label>}
+        <span>{compact ? 'Imagen de referencia' : 'Es una imagen de referencia de un objeto parecido.'}</span></label>}
       {error && <p className="help help--error" role="alert">{error}</p>}
     </section>
   )
+  if (!compact) return picker
+  return <details className="photo-picker">
+    <summary>{value ? 'Foto adjunta' : 'Agregar foto (opcional)'}</summary>
+    {picker}
+  </details>
 }

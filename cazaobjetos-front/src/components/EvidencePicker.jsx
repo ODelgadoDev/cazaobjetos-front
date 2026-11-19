@@ -1,35 +1,63 @@
-import { useEffect, useId, useState } from 'react'
-import { IconImage, IconTrash } from './Icons.jsx'
+import { useId, useState } from 'react'
+import { IconImage } from './Icons.jsx'
 
-export default function EvidencePicker({ files, onChange, disabled = false, max = 5 }) {
+export default function EvidencePicker({ files, urls, onChange, disabled = false, max = 5 }) {
   const id = useId()
-  const [previews, setPreviews] = useState([])
+  const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
-  useEffect(() => {
-    const urls = files.map((file) => URL.createObjectURL(file))
-    setPreviews(urls)
-    return () => urls.forEach((url) => URL.revokeObjectURL(url))
-  }, [files])
+  const total = files.length + urls.length
   function select(event) {
-    const selected = [...(event.target.files || [])]; event.target.value = ''; setError('')
+    const selected = [...(event.target.files || [])]
+    event.target.value = ''
     if (!selected.length) return
-    if (files.length + selected.length > max) return setError(`Puedes adjuntar hasta ${max} imágenes.`)
-    if (selected.some((file) => !['image/jpeg', 'image/png'].includes(file.type))) return setError('Las evidencias deben ser imágenes JPG o PNG.')
-    if (selected.some((file) => !file.size || file.size > 5 * 1024 * 1024)) return setError('Cada evidencia debe pesar entre 1 byte y 5 MB.')
-    onChange([...files, ...selected])
+    if (total + selected.length > max) { setError(`Puedes añadir hasta ${max} imágenes.`); return }
+    if (selected.some((file) => !['image/jpeg', 'image/png'].includes(file.type) || !file.size || file.size > 5 * 1024 * 1024)) {
+      setError('Usa archivos JPG o PNG de hasta 5 MB.')
+      return
+    }
+    setError('')
+    onChange([...files, ...selected], urls)
+  }
+  function addUrl() {
+    try {
+      const url = new URL(draft.trim())
+      if (url.protocol !== 'https:' || url.username || url.password || url.href.length > 2048) throw new Error()
+      if (urls.includes(url.href)) { setError('La imagen ya está añadida.'); return }
+      onChange(files, [...urls, url.href])
+      setDraft('')
+      setError('')
+    } catch { setError('Usa un enlace HTTPS directo de imagen.') }
   }
   return (
-    <div className="evidence-picker">
-      <label htmlFor={id} className="label"><span><IconImage width={17} height={17} /> Adjuntar imágenes de prueba</span><span className="muted">Opcional</span></label>
-      <p className="account-help" id={`${id}-help`}>JPG o PNG · hasta 5 MB y 12 megapíxeles por imagen. Estas pruebas son privadas. Solo el solicitante y la persona que revisa el reclamo pueden verlas.</p>
-      {files.length < max && <input id={id} type="file" className="input" multiple accept="image/jpeg,image/png" disabled={disabled} onChange={select} aria-describedby={`${id}-help`} aria-label="Adjuntar imágenes de prueba" />}
-      <div className="evidence-grid">{files.map((file, index) => <figure className="evidence-preview" key={`${file.name}-${index}`}>
-        <img src={previews[index]} alt={`Vista previa de evidencia ${index + 1}`} />
-        <button type="button" className="evidence-remove" aria-label={`Quitar evidencia ${index + 1}`} disabled={disabled} onClick={() => { onChange(files.filter((_, i) => i !== index)); setError('') }}><IconTrash width={17} height={17} /></button>
-        <figcaption>{file.name}</figcaption>
-      </figure>)}</div>
-      {!!files.length && <p className="help">{files.length} de {max} imágenes seleccionadas. Puedes quitarlas antes de enviar.</p>}
-      {error && <p className="help help--error" role="alert">{error}</p>}
-    </div>
+    <details className="claim-attachments">
+      <summary><IconImage width={17} height={17} /> Fotos opcionales{total > 0 && ` (${total})`}</summary>
+      <div className="claim-section__body">
+        {total < max && <>
+          <div className="field">
+            <label htmlFor={id}>Subir foto</label>
+            <input id={id} type="file" className="input" multiple={max > 1} accept="image/jpeg,image/png" disabled={disabled} onChange={select} />
+          </div>
+          <div className="field">
+            <label htmlFor={`${id}-url`}>Enlace de imagen</label>
+            <div className="inline-field">
+              <input id={`${id}-url`} type="text" inputMode="url" className="input" autoComplete="off" placeholder="https://…" value={draft} disabled={disabled} onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (draft.trim()) addUrl() } }} />
+              <button type="button" className="btn btn--secondary" onClick={addUrl} disabled={disabled || !draft.trim()}>Añadir enlace</button>
+            </div>
+          </div>
+        </>}
+        {(total > 0) && <ul className="attachment-list">
+          {files.map((file, index) => <li key={`file-${index}`}>
+            <span>{file.name}</span>
+            <button type="button" className="link-green" aria-label={`Quitar ${file.name}`} disabled={disabled} onClick={() => { setError(''); onChange(files.filter((_, i) => i !== index), urls) }}>Quitar</button>
+          </li>)}
+          {urls.map((url, index) => <li key={url}>
+            <span>Imagen por enlace {index + 1}</span>
+            <button type="button" className="link-green" aria-label={`Quitar enlace ${index + 1}`} disabled={disabled} onClick={() => { setError(''); onChange(files, urls.filter((value) => value !== url)) }}>Quitar</button>
+          </li>)}
+        </ul>}
+        {error && <p className="help help--error" role="alert">{error}</p>}
+      </div>
+    </details>
   )
 }

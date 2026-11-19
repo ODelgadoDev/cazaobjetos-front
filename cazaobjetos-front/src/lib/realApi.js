@@ -60,7 +60,7 @@ const person = (user) => ({
   matricula: user.studentNumber ?? null,
   fotoPerfil: user.avatarVersion ? `${BASE}/auth/me/photo?v=${encodeURIComponent(user.avatarVersion)}` : null,
 })
-const knownPerson = (id) => id === usuario?.id ? usuario : { id, nombre: 'Usuario UTCH' }
+const knownPerson = (id, nombre) => id === usuario?.id ? usuario : { id, nombre: nombre || 'Usuario UTCH' }
 const routeFor = (tipo) => tipo === 'hallazgos' ? '/found-items' : '/lost-reports'
 const office = 'Oficina de profesores · mesa de objetos perdidos · edificio I'
 
@@ -139,7 +139,7 @@ function mapFound(item, images = [], claims = [], delegates = []) {
     resguardo: { OFFICE: 'oficina', WITH_TEACHER: 'docente', WITH_FINDER: 'persona' }[item.custody],
     custodia: item.custody === 'OFFICE' ? (item.custodyLocation || office) : item.custody === 'WITH_TEACHER' ? `Con ${item.teacherName}${item.custodyLocation ? ' · ' + item.custodyLocation : ''}` : null,
     docente: item.teacherName || '', ubicacionResguardo: item.custodyLocation || '',
-    autor: knownPerson(item.reporterId), gestor: delegates.find((d) => d.id === item.responsibleId) || knownPerson(item.responsibleId),
+    autor: knownPerson(item.reporterId, item.reporterName), gestor: delegates.find((d) => d.id === item.responsibleId) || knownPerson(item.responsibleId, item.responsibleName),
     fecha: item.foundOn, lugar: item.foundLocation, descripcionPublica: item.description,
     fotos: images, foto: images[0]?.url || null, permisos: permissionsFound(item, claims),
     reclamoActivoId: claims.find((claim) => claim.foundItemId === item.id && claim.claimantId === usuario?.id && activeClaim(claim))?.id || null,
@@ -152,7 +152,7 @@ function mapLost(item, images = [], claims = []) {
   return {
     id: item.id, folio: folio('EXT', item.id), titulo: item.title, categoria: categoryLabels[item.category],
     estado: { ACTIVE: 'activo', RECOVERED: 'recuperado', WITHDRAWN: 'retirado' }[item.status],
-    autor: knownPerson(item.ownerId), fecha: item.lostOn, lugar: item.lostLocation, descripcion: item.description,
+    autor: knownPerson(item.ownerId, item.ownerName), fecha: item.lostOn, lugar: item.lostLocation, descripcion: item.description, tieneRespuesta: !!item.hasResponse,
     fotos: images, foto: images[0]?.url || null, alertas: false,
     permisos: { editar: mine, editarFotos: mine && !linked, vincular: mine && !linked, retirar: mine && !linked, marcarRecuperado: mine && !linked },
   }
@@ -193,21 +193,25 @@ async function getPublication(tipo, id) {
 }
 export const getHallazgo = (id) => getPublication('hallazgos', id)
 export const getExtravio = (id) => getPublication('extravios', id)
+export async function misExtraviosParaReclamo() {
+  const [lost, claims] = await Promise.all([allPages('/lost-reports/mine', { status: 'ACTIVE' }), myClaims()])
+  return lost.map((item) => mapLost(item, [], claims)).filter((item) => item.permisos.vincular)
+}
 export async function misPublicaciones() {
   const [found, lost, claims, delegates] = await Promise.all([allPages('/found-items/mine'), allPages('/lost-reports/mine'), myClaims(), listDelegados()])
-  const mapped = found.map((item) => mapFound(item, [], claims, delegates))
+  const mapped = await Promise.all(found.map(async (item) => mapFound(item, await photos('hallazgos', item.id), claims, delegates)))
   return {
     hallazgos: mapped.filter((item) => item.autor.id === usuario.id),
     delegados: mapped.filter((item) => item.gestor.id === usuario.id && item.autor.id !== usuario.id),
-    extravios: lost.map((item) => mapLost(item, [], claims)),
+    extravios: await Promise.all(lost.map(async (item) => mapLost(item, await photos('extravios', item.id), claims))),
   }
 }
 const reportBody = (data) => ({ title: data.titulo.trim(), description: data.descripcion.trim(), category: categories[data.categoria], location: data.lugar.trim(), occurredOn: data.fecha })
 export async function crearHallazgo(data) {
-  if (!data.foto) throw new Error('Adjunta una foto real del objeto encontrado.')
   const body = new FormData()
-  body.append('request', new Blob([JSON.stringify({ report: reportBody(data), sourceLostReportId: data.sourceLostReportId || null, custody: custodyBody(data) })], { type: 'application/json' }))
-  body.append('file', data.foto)
+  body.append('request', new Blob([JSON.stringify({ report: reportBody(data), sourceLostReportId: data.sourceLostReportId || null, custody: custodyBody(data), photoUrl: data.imagen?.url || null, referenceImage: !!data.imagen?.referenceImage })], { type: 'application/json' }))
+  const file = data.imagen?.file || data.foto
+  if (file) body.append('file', file)
   const { id } = await request('POST', '/found-items/publish', body, data.requestKey)
   return { id, folio: folio('HAL', id) }
 }
@@ -243,22 +247,24 @@ export async function delegarHallazgo(id, responsibleId) {
 }
 export async function agregarFoto(tipo, id, file, referenceImage = false) {
   const form = new FormData(); form.append('file', file)
-  if (tipo === 'extravios') form.append('referenceImage', String(referenceImage))
+  form.append('referenceImage', String(referenceImage))
   const photo = await request('POST', `${routeFor(tipo)}/${id}/photos`, form)
   return { ...photo, url: `${BASE}${routeFor(tipo)}/${id}/photos/${photo.id}` }
 }
-export async function importarFoto(id, url, referenceImage = true) {
-  const photo = await request('POST', `/lost-reports/${id}/photos/import`, { url, referenceImage })
-  return { ...photo, url: `${BASE}/lost-reports/${id}/photos/${photo.id}` }
+export async function importarFoto(id, url, referenceImage = true, tipo = 'extravios') {
+  const path = `${routeFor(tipo)}/${id}/photos`
+  const photo = await request('POST', `${path}/import`, { url, referenceImage })
+  return { ...photo, url: `${BASE}${path}/${photo.id}` }
 }
 export const eliminarFoto = (tipo, id, photoId) => request('DELETE', `${routeFor(tipo)}/${id}/photos/${photoId}`)
 export async function crearReclamo(data) {
   const requestBody = { privateDescription: data.descripcionPrivada, lostReportId: data.lostReportId || null }
   let body = requestBody
-  if (data.evidencias?.length) {
+  if (data.evidencias?.length || data.evidenceUrls?.length) {
     body = new FormData()
     body.append('request', new Blob([JSON.stringify(requestBody)], { type: 'application/json' }))
-    data.evidencias.forEach((file) => body.append('files', file))
+    data.evidencias?.forEach((file) => body.append('files', file))
+    if (data.evidenceUrls?.length) body.append('urls', new Blob([JSON.stringify(data.evidenceUrls)], { type: 'application/json' }))
   }
   return request('POST', `/found-items/${data.hallazgoId}/claims`, body, data.requestKey)
 }
@@ -269,6 +275,8 @@ export async function agregarEvidenciaReclamo(id, file, key) {
   const body = new FormData(); body.append('file', file)
   return request('POST', `/claims/${id}/evidence`, body, key)
 }
+export const agregarEnlaceEvidenciaReclamo = (id, url, key) =>
+  request('POST', `/claims/${id}/evidence/import`, { url, referenceImage: true }, key)
 export async function getReclamo(id) {
   const detail = await request('GET', `/claims/${id}`)
   const { claim, foundItem, responsible, claimant } = detail

@@ -185,18 +185,18 @@ export async function listDelegados() {
 export async function crearHallazgo(data) {
   if (!USE_MOCK) return real.crearHallazgo(data)
   if (data.sourceLostReportId) { const source = extravio(data.sourceLostReportId); if (!source || source.estado !== 'activo' || source.autor.id === yo.id) return fail('El reporte original no está disponible para publicar un hallazgo vinculado.') }
-  if (!data.foto) return fail('Adjunta una foto real del objeto encontrado.')
+  const imageUrl = data.fotoPreview || (data.imagen?.file ? await leerArchivo(data.imagen.file) : data.imagen?.url)
   const gestor = persona(yo)
   const resguardo = data.resguardo || 'persona'
   const custodia = resguardo === 'docente' ? `Con ${data.docente} · ${data.ubicacionResguardo || ''}` : resguardo === 'oficina' ? data.ubicacionResguardo || 'Oficina de profesores · edificio I' : null
   const id = nextId++
   const h = {
-    id, sourceLostReportId: data.sourceLostReportId || null, autor: persona(yo), fotos: data.fotoPreview ? [{ id: nextId++, url: data.fotoPreview }] : [],
+    id, sourceLostReportId: data.sourceLostReportId || null, autor: persona(yo), fotos: imageUrl ? [{ id: nextId++, url: imageUrl, referenceImage: !!data.imagen?.referenceImage }] : [],
     folio: `#UTCH-2026-${String(id).padStart(4, '0')}`, titulo: data.titulo, categoria: data.categoria,
     estado: resguardo === 'persona' ? 'con_finder' : 'bajo_custodia', resguardo,
     custodia, gestor, docente: data.docente, ubicacionResguardo: data.ubicacionResguardo,
     fecha: new Date(`${data.fecha}T${data.hora || '00:00'}`).toISOString(), lugar: data.lugar, zona: 'Salones',
-    foto: data.fotoPreview || null, descripcionPublica: data.descripcion,
+    foto: imageUrl || null, descripcionPublica: data.descripcion,
   }
   db.hallazgos.unshift(h)
   return wait(h)
@@ -278,6 +278,7 @@ export async function marcarExtravioRecuperado(id) {
 
 // ---------- Mis publicaciones ----------
 // -> { hallazgos, delegados, extravios }, cada item con `permisos`
+export const misExtraviosParaReclamo = () => USE_MOCK ? wait([]) : real.misExtraviosParaReclamo()
 export async function misPublicaciones() {
   if (!USE_MOCK) return real.misPublicaciones()
   const conP = (h) => ({ ...h, permisos: permisosHallazgo(h) })
@@ -322,7 +323,10 @@ export async function crearReclamo(data) {
   const r = {
     id, folio: `#REC-${id}`, hallazgoId: h.id, titulo: h.titulo, estado: 'enviado',
     descripcionPrivada: data.descripcionPrivada, observaciones: '', creado: new Date().toISOString(),
-    evidencias: await Promise.all((data.evidencias || []).map(async (file) => ({ id: nextId++, url: await leerArchivo(file), authorId: yo.id, createdAt: new Date().toISOString() }))),
+    evidencias: [
+      ...await Promise.all((data.evidencias || []).map(async (file) => ({ id: nextId++, url: await leerArchivo(file), authorId: yo.id, createdAt: new Date().toISOString() }))),
+      ...(data.evidenceUrls || []).map((url) => ({ id: nextId++, url, reference: true, authorId: yo.id, createdAt: new Date().toISOString() })),
+    ],
     actividad: [{ id: nextId++, kind: 'SUBMITTED', actorId: yo.id, actorName: yo.nombre, body: 'Reclamo registrado.', createdAt: new Date().toISOString() }],
     solicitante: { id: yo.id, nombre: yo.nombre, correo: yo.correo, matricula: yo.matricula, carrera: yo.carrera },
   }
@@ -505,6 +509,15 @@ export async function agregarEvidenciaReclamo(id, file, key) {
   if (!r.puedeAportar) return fail('El expediente es de solo lectura.')
   if ((reclamo(id).evidencias || []).length >= 5) return fail('Máximo 5 evidencias.')
   const image = { id: nextId++, url: await leerArchivo(file), authorId: yo.id, createdAt: new Date().toISOString() }
+  ;(reclamo(id).evidencias ||= []).push(image)
+  return wait(image)
+}
+export async function agregarEnlaceEvidenciaReclamo(id, url, key) {
+  if (!USE_MOCK) return real.agregarEnlaceEvidenciaReclamo(id, url, key)
+  const r = await getReclamo(id)
+  if (!r.puedeAportar) return fail('El expediente es de solo lectura.')
+  if ((reclamo(id).evidencias || []).length >= 5) return fail('Máximo 5 evidencias.')
+  const image = { id: nextId++, url, reference: true, authorId: yo.id, createdAt: new Date().toISOString() }
   ;(reclamo(id).evidencias ||= []).push(image)
   return wait(image)
 }

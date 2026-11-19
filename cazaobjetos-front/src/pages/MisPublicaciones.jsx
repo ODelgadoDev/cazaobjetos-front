@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import * as api from '../lib/api.js'
 import CustodyEditor from '../components/CustodyEditor.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { Chip, ChipExtravio, ChipHallazgo } from '../components/Chip.jsx'
-import { IconCheck, IconEdit, IconPlus, IconTrash } from '../components/Icons.jsx'
+import { Foto } from '../components/ObjectCard.jsx'
+import { IconCheck, IconEdit, IconTrash } from '../components/Icons.jsx'
 import { fechaCorta } from '../lib/format.js'
 
 const TABS = [
-  { id: 'hallazgos', label: 'Encontré' },
-  { id: 'delegados', label: 'Delegados a mí' },
-  { id: 'extravios', label: 'Perdí' },
+  { id: 'hallazgos', label: 'Encontrados' },
+  { id: 'extravios', label: 'Perdidos' },
 ]
 
 function HallazgoItem({ h, run }) {
@@ -19,19 +19,15 @@ function HallazgoItem({ h, run }) {
 
   return (
     <article className="card">
-      <div className="pager"><span className="folio">{h.folio}</span><ChipHallazgo estado={h.estado} custodia={h.custodia} /></div>
+      <Foto src={h.foto} reference={h.fotos?.[0]?.referenceImage} />
       <h3><Link to={`/reclamo/${h.id}`}>{h.titulo}</Link></h3>
-      <div className="metabox">
-        <div><span className="k">FECHA</span> {fechaCorta(h.fecha)}</div>
-        <div><span className="k">LUGAR</span> {h.lugar}</div>
-        <div><span className="k">RESGUARDO</span> {h.custodia ?? 'Con quien lo encontró'}</div>
-        <div><span className="k">GESTIONA</span> {h.gestor?.nombre}</div>
-        {h.autor && h.gestor && h.autor.id !== h.gestor.id && <div><span className="k">REPORTÓ</span> {h.autor.nombre}</div>}
-      </div>
+      <div className="chips"><ChipHallazgo estado={h.estado} custodia={h.custodia} /></div>
+      <p className="account-help">{h.lugar} · {fechaCorta(h.fecha)}</p>
+      {h.autor?.nombre && <p className="account-help">Publicado por {h.autor.nombre}</p>}
 
       {abierto === 'resguardo' && <CustodyEditor item={h} onCancel={() => setAbierto(null)} onSaved={() => { setAbierto(null); run(async () => {}, 'Resguardo actualizado.') }} />}
 
-      {!abierto && (
+      {!abierto && (p.editar || p.cambiarResguardo || p.retirar) && (
         <div className="acciones">
           {p.editar && <Link className="btn btn--secondary" to={`/editar/hallazgo/${h.id}`}><IconEdit width={18} height={18} /> Editar</Link>}
           {p.cambiarResguardo && <button className="btn btn--secondary" onClick={() => setAbierto('resguardo')}>Cambiar resguardo</button>}
@@ -42,9 +38,6 @@ function HallazgoItem({ h, run }) {
           )}
         </div>
       )}
-      {!p.editar && !p.cambiarResguardo && !p.retirar && (
-        <p className="help" style={{ margin: 0 }}>{h.estado === 'retirado' ? 'PUBLICACIÓN RETIRADA' : h.estado === 'entregado' ? 'OBJETO ENTREGADO · SIN ACCIONES' : 'SIN ACCIONES DISPONIBLES PARA TU CUENTA EN ESTE ESTADO'}</p>
-      )}
     </article>
   )
 }
@@ -53,15 +46,14 @@ function ExtravioItem({ e, run }) {
   const p = e.permisos || {}
   return (
     <article className="card">
-      <div className="pager"><span className="folio">{e.folio}</span><ChipExtravio estado={e.estado} /></div>
+      <Foto src={e.foto} reference={e.fotos?.[0]?.referenceImage} />
       <h3><Link to={`/extravio/${e.id}`}>{e.titulo}</Link></h3>
-      <div className="chips"><Chip>{e.categoria}</Chip>{e.alertas && <Chip tipo="info">Alertas por correo</Chip>}</div>
-      <div className="metabox">
-        <div><span className="k">FECHA</span> {fechaCorta(e.fecha)}</div>
-        <div><span className="k">LUGAR</span> {e.lugar}</div>
-      </div>
-      <div className="acciones">
-        {p.marcarRecuperado && (
+      <div className="chips"><ChipExtravio estado={e.estado} />{(e.tieneRespuesta || e.estado === 'encontrado') && <Chip tipo="ok">Posible hallazgo</Chip>}</div>
+      <p className="account-help">{e.lugar} · {fechaCorta(e.fecha)}</p>
+      {e.autor?.nombre && <p className="account-help">Publicado por {e.autor.nombre}</p>}
+      {(p.marcarRecuperado || p.editar || p.retirar) && <div className="acciones">
+        {e.tieneRespuesta && <Link className="btn btn--primary" to={`/extravio/${e.id}`}>Ver respuestas</Link>}
+        {p.marcarRecuperado && !e.tieneRespuesta && (
           <button className="btn btn--primary" onClick={() => { if (window.confirm('¿Ya recuperaste este objeto? Se cerrará el reporte.')) run(() => api.marcarExtravioRecuperado(e.id), '¡Qué bien! Reporte marcado como recuperado.') }}>
             <IconCheck width={18} height={18} /> Ya lo recuperé
           </button>
@@ -72,13 +64,12 @@ function ExtravioItem({ e, run }) {
             <IconTrash width={18} height={18} /> Retirar reporte
           </button>
         )}
-      </div>
+      </div>}
     </article>
   )
 }
 
 export default function MisPublicaciones() {
-  const navigate = useNavigate()
   const toast = useToast()
   const [params, setParams] = useSearchParams()
   const tab = TABS.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'hallazgos'
@@ -98,9 +89,8 @@ export default function MisPublicaciones() {
 
   const lista = data[tab]
   const vacio = {
-    hallazgos: 'Aún no has publicado hallazgos. Si encuentras algo, repórtalo para que su dueño lo encuentre.',
-    delegados: 'Nadie te ha delegado objetos. Aquí verás los hallazgos cuya devolución gestionas por encargo.',
-    extravios: 'No tienes reportes de extravío. Si pierdes algo, crea uno para que puedan identificarlo.',
+    hallazgos: 'Aún no has publicado objetos encontrados.',
+    extravios: 'Aún no has publicado objetos perdidos.',
   }[tab]
 
   return (
@@ -122,11 +112,6 @@ export default function MisPublicaciones() {
       </div>
       {!lista.length && <p className="empty">{vacio}</p>}
 
-      {tab !== 'delegados' && (
-        <button className="btn btn--dark" onClick={() => navigate(tab === 'extravios' ? '/reportar?tab=perdi' : '/reportar')}>
-          <IconPlus width={18} height={18} /> {tab === 'extravios' ? 'Reportar un extravío' : 'Reportar un hallazgo'}
-        </button>
-      )}
     </>
   )
 }

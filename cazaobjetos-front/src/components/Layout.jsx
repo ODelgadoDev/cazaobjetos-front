@@ -23,7 +23,8 @@ const TITULOS = {
 const DETALLES = [
   [/^\/reclamo\/[^/]+$/, 'Detalle del hallazgo'],
   [/^\/reclamos\/[^/]+$/, 'Reclamo'],
-  [/^\/extravio\/[^/]+$/, 'Objeto perdido'],
+  [/^\/extravio\/[^/]+$/, 'Extravío'],
+  [/^\/extravio\/[^/]+\/responder$/, 'Lo encontré'],
   [/^\/editar\/[^/]+\/[^/]+$/, 'Editar publicación'],
   [/^\/cuenta$/, 'Mi cuenta'],
 ]

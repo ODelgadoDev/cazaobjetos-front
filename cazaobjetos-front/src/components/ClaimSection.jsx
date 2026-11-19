@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
-export default function ClaimSection({ id, title, children }) {
+export default function ClaimSection({ id, title, children, defaultOpen }) {
   const section = useRef(null)
-  const [initiallyOpen] = useState(() => window.matchMedia('(min-width: 900px)').matches)
+  const [initiallyOpen] = useState(() => defaultOpen ?? window.matchMedia('(min-width: 900px)').matches)
   useEffect(() => {
     function followLink() {
       if (window.location.hash !== '#' + id) return

@@ -1,0 +1,13 @@
+.lost-responses { display: grid; gap: 12px; min-width: 0; }
+.lost-responses > h2, .lost-response h2, .lost-response h3, .lost-response p { margin: 0; }
+.lost-response { scroll-margin-top: 84px; }
+.lost-response__head, .lost-response__byline { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 12px; flex-wrap: wrap; }
+.lost-response__byline, .lost-response time { color: var(--texto-tenue); font-size: 13px; margin: 0; overflow-wrap: anywhere; }
+.lost-response__body, .lost-response__comments p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.lost-response__photo { display: block; width: auto; max-width: 100%; max-height: 220px; object-fit: contain; align-self: flex-start; border-radius: 8px; }
+.lost-response__thread > summary { cursor: pointer; color: var(--verde-oscuro); font-weight: 700; padding-block: 8px; }
+.lost-response__comments { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.lost-response__comments > li { display: grid; gap: 4px; padding: 10px 12px; border-radius: 8px; background: var(--superficie-tenue); }
+.lost-response__form { display: grid; gap: 8px; margin-top: 12px; }
+.lost-response__form > label { color: var(--texto-tenue); font-size: 13px; }
+.lost-legacy-links { display: flex; flex-wrap: wrap; gap: 8px 16px; }

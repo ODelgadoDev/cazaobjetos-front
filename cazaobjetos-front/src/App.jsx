@@ -18,6 +18,7 @@ import Reportar from './pages/Reportar.jsx'
 import MisPublicaciones from './pages/MisPublicaciones.jsx'
 import EditarPublicacion from './pages/EditarPublicacion.jsx'
 import DetalleExtravio from './pages/DetalleExtravio.jsx'
+import ResponderExtravio from './pages/ResponderExtravio.jsx'
 import MiCuenta from './pages/MiCuenta.jsx'
 import Vigilancia from './pages/Vigilancia.jsx'
 
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/publicaciones" element={<MisPublicaciones />} />
             <Route path="/editar/:tipo/:id" element={<EditarPublicacion />} />
             <Route path="/extravio/:id" element={<DetalleExtravio />} />
+            <Route path="/extravio/:id/responder" element={<ResponderExtravio />} />
             <Route path="/notificaciones" element={<Notificaciones />} />
             <Route path="/cuenta" element={<MiCuenta />} />
             {esStaff && <Route path="/vigilancia" element={<Vigilancia />} />}
