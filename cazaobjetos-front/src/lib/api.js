@@ -566,3 +566,5 @@ export const savePushPreference = (frequency) => USE_MOCK ? Promise.resolve({ da
 export const registerPush = (data) => real.registerPush(data)
 export const disablePush = (id) => real.disablePush(id)
 export const testPush = (id) => real.testPush(id)
+
+export const notificationPhotos = (notices) => USE_MOCK ? wait({}) : real.notificationPhotos(notices)

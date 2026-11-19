@@ -1,11 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { clearReadNotifications, listNotifications, readNotification } from '../lib/api.js'
+import { clearReadNotifications, listNotifications, readNotification, notificationPhotos } from '../lib/api.js'
 import { useNotifications } from '../context/NotificationContext.jsx'
 import DeviceNotifications from '../components/DeviceNotifications.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { IconTrash, IconArrowRight } from '../components/Icons.jsx'
 import './flujo-simple.css'
+
+function NotificationImages({ images }) {
+  const [failed, setFailed] = useState([])
+  const visible = images.filter((image) => !failed.includes(image.url))
+  if (!visible.length) return null
+  return <span className={`notice-images${visible.length > 1 ? ' notice-images--pair' : ''}`}>
+    {visible.map((image) => <img key={image.url} src={image.url} alt={image.label} loading="lazy" referrerPolicy="no-referrer"
+      onError={() => setFailed((current) => [...current, image.url])} />)}
+  </span>
+}
 
 const date = (value) => new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 
@@ -27,6 +37,14 @@ export default function Notificaciones() {
   const [filter, setFilter] = useState('ALL')
   const [page, setPage] = useState(0)
   const [data, setData] = useState(null)
+  const [images, setImages] = useState({})
+  const imageKey = data?.items.map((notice) => notice.id).join(',') || ''
+  useEffect(() => {
+    let active = true
+    if (!data?.items.length) { setImages({}); return }
+    notificationPhotos(data.items).then((result) => { if (active) setImages(result) }).catch(() => {})
+    return () => { active = false }
+  }, [imageKey])
   const [loading, setLoading] = useState(true)
   const [clearing, setClearing] = useState(false)
   const [error, setError] = useState('')
@@ -143,10 +161,11 @@ export default function Notificaciones() {
               }}
               onPointerLeave={() => setHovered((current) => current?.notice.id === notice.id ? null : current)}
               onClick={() => open(notice)}>
+              <NotificationImages images={images[notice.id] || []} />
               <span className="notification-card__content">
-                <strong>{notice.actorName || notice.action || notice.title}</strong>
-                {notice.actorName && <span>{notice.action || notice.title}</span>}
-                {notice.objectTitle && <span className="muted">{notice.objectTitle}</span>}
+                <strong className="notice-object">{notice.objectTitle || notice.title}</strong>
+                <span className={`notice-action${notice.kind === 'ACCEPTED' ? ' notice-action--ready' : ''}`}>{notice.kind === 'ACCEPTED' ? 'Listo para recoger' : notice.action || notice.title}</span>
+                {notice.actorName && <span className="notice-actor">{notice.actorName}</span>}
                 <time dateTime={notice.createdAt}>{date(notice.createdAt)}</time>
               </span>
               <IconArrowRight className="notification-card__arrow" width={18} height={18} />

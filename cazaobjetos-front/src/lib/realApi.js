@@ -323,3 +323,37 @@ export const savePushPreference = (dailyReminders) => request('PUT', '/push/pref
 export const registerPush = (data) => request('POST', '/push/subscriptions', { expectedUserId: data.expectedUserId, endpoint: data.endpoint, keys: data.keys })
 export const disablePush = (id) => request('DELETE', `/push/subscriptions/${id}`)
 export const testPush = (subscriptionId) => request('POST', '/push/test', { subscriptionId })
+
+// Deduplicate publication lookups for notifications referring to the same object.
+export async function notificationPhotos(notices) {
+  const cache = new Map()
+  const get = (path) => {
+    if (!cache.has(path)) cache.set(path, request('GET', path).catch(() => null))
+    return cache.get(path)
+  }
+  const firstPhoto = async (path, label) => {
+    const images = await get(path)
+    return images?.[0] ? { url: `${BASE}${path}/${images[0].id}`, label } : null
+  }
+  return Object.fromEntries(await Promise.all(notices.map(async (notice) => {
+    const images = []
+    if (notice.targetType === 'CLAIM') {
+      const detail = await get(`/claims/${notice.targetId}`)
+      const found = detail?.foundItem
+      if (found && (found.status !== 'WITHDRAWN' || [found.reporterId, found.responsibleId].includes(usuario?.id))) {
+        images.push(await firstPhoto(`/found-items/${found.id}/photos`, 'Objeto encontrado'))
+      }
+      if (detail?.claim.lostReportId) images.push(await firstPhoto(`/lost-reports/${detail.claim.lostReportId}/photos`, 'Objeto perdido'))
+    } else if (notice.targetType === 'FOUND_ITEM') {
+      images.push(await firstPhoto(`/found-items/${notice.targetId}/photos`, 'Objeto encontrado'))
+    } else if (notice.targetType === 'LOST_REPORT') {
+      images.push(await firstPhoto(`/lost-reports/${notice.targetId}/photos`, 'Objeto perdido'))
+      if (notice.responseId) {
+        const replies = await get(`/lost-reports/${notice.targetId}/responses`)
+        const reply = replies?.find((item) => item.id === notice.responseId)
+        if (reply?.photoType === 'UPLOAD') images.push({ url: `${BASE}/lost-reports/${notice.targetId}/responses/${reply.id}/photo`, label: 'Posible hallazgo' })
+      }
+    }
+    return [notice.id, images.filter(Boolean).slice(0, 2)]
+  })))
+}

@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useNotifications } from '../context/NotificationContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -58,11 +58,11 @@ export default function Layout() {
         )}
         <div className="topbar__main">
           {!enReclamo && (
-            <InstitutionBrand />
+            <Link to="/" aria-label="Ir a Explorar" title="Explorar"><InstitutionBrand /></Link>
           )}
           <h1 className="topbar__title">{titulo}</h1>
         </div>
-        {enReclamo && <span className="topbar__institution"><InstitutionBrand compact /></span>}
+        {enReclamo && <Link to="/" className="topbar__institution" aria-label="Ir a Explorar" title="Explorar"><InstitutionBrand compact /></Link>}
         <div className="topbar__actions">
         <InstallApp compact />
         <AppearanceControl compact />

@@ -6,7 +6,7 @@ import { usePush } from '../context/PushContext.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { ChipHallazgo } from '../components/Chip.jsx'
 import { Foto } from '../components/ObjectCard.jsx'
-import EvidencePicker from '../components/EvidencePicker.jsx'
+import EvidencePicker, { selectedEvidenceUrls } from '../components/EvidencePicker.jsx'
 import { fechaCorta } from '../lib/format.js'
 import './flujo-simple.css'
 
@@ -30,7 +30,7 @@ function Hallazgo({ id }) {
   const [item, setItem] = useState(null)
   const [error, setError] = useState('')
   const [description, setDescription] = useState('')
-  const [photos, setPhotos] = useState({ files: [], urls: [] })
+  const [photos, setPhotos] = useState({ files: [], urls: [], draftUrl: '' })
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
@@ -59,11 +59,12 @@ function Hallazgo({ id }) {
     if (!canSend) return
     setSending(true); setError('')
     try {
+      const evidenceUrls = selectedEvidenceUrls(photos)
       const result = await crearReclamo({
         hallazgoId: item.id,
         descripcionPrivada: description.trim(),
         evidencias: photos.files,
-        evidenceUrls: photos.urls,
+        evidenceUrls,
         lostReportId,
         requestKey: requestKey.current,
       })
@@ -100,7 +101,8 @@ function Hallazgo({ id }) {
           aria-describedby="claim-description-hint" onChange={(e) => setDescription(e.target.value)} />
         <p id="claim-description-hint" className="account-help">Respuesta privada · mínimo {MIN_DESCRIPTION} caracteres.</p>
       </div>
-      <EvidencePicker files={photos.files} urls={photos.urls} disabled={sending} onChange={(files, urls) => setPhotos({ files, urls })} />
+      <EvidencePicker files={photos.files} urls={photos.urls} draftUrl={photos.draftUrl}
+        onDraftUrlChange={(draftUrl) => setPhotos((current) => ({ ...current, draftUrl }))} disabled={sending} onChange={(files, urls) => setPhotos({ files, urls })} />
       {losses.length > 0 && <details className="claim-attachments" open={Boolean(item.sourceLostReportId) || undefined}>
         <summary>Vincular mi extravío</summary>
         <div className="claim-section__body">

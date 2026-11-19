@@ -9,6 +9,7 @@ import ClaimDossier from '../components/ClaimDossier.jsx'
 import CustodyEditor from '../components/CustodyEditor.jsx'
 import ClaimSection from '../components/ClaimSection.jsx'
 import { PushInvitation } from '../components/DeviceNotifications.jsx'
+import { IconCheck, IconPin } from '../components/Icons.jsx'
 import './flujo-simple.css'
 
 export default function DetalleReclamo() {
@@ -84,10 +85,21 @@ function Expediente({ id }) {
       <section className="card claim-summary" id="claim-next" aria-label="Reclamo">
         <div className="pager"><span className="folio">{claim.folio}</span><ChipReclamo estado={claim.estado} /></div>
         <h2>{claim.titulo}</h2>
+        {claim.estado === 'aprobado' && <div className="claim-ready" role="status">
+          <IconCheck width={28} height={28} />
+          <div className="claim-ready__content">
+            <strong>{mine ? 'Tu objeto está listo para recoger' : 'Reclamo aceptado · pendiente de entrega'}</strong>
+            <span className="claim-ready__location"><IconPin width={18} height={18} />
+              {item?.resguardo === 'oficina' ? (mine ? 'Recoge en oficina' : 'Entrega en oficina') : item?.resguardo === 'docente' ? `Con ${item.docente || 'el docente'}` : `Entrega con ${mine ? claim.gestor?.nombre || item?.autor?.nombre : claim.solicitante?.nombre}`}
+            </span>
+            {item?.resguardo === 'oficina' && <span>{item.ubicacionResguardo || 'Oficina de profesores · edificio I'}</span>}
+            {item?.resguardo === 'docente' && item.ubicacionResguardo && <span>{item.ubicacionResguardo}</span>}
+            {item?.resguardo === 'persona' && <a href="#claim-comments">Acordar encuentro</a>}
+          </div>
+        </div>}
         <dl className="claim-participants">
           <div><dt>Solicita</dt><dd>{claim.solicitante?.nombre}</dd></div>
           <div><dt>Gestiona</dt><dd>{claim.gestor?.nombre}</dd></div>
-          {claim.estado === 'aprobado' && location && <div><dt>Entrega</dt><dd>{location}</dd></div>}
         </dl>
         {claim.descripcionPrivada && <p className="claim-private-description">{claim.descripcionPrivada}</p>}
         {(error || loadError) && <p className="notice notice--peligro" role="alert">{error || loadError}</p>}

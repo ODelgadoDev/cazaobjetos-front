@@ -3,7 +3,7 @@ import { agregarEnlaceEvidenciaReclamo, agregarEvidenciaReclamo, comentarReclamo
 import { useNotifications } from '../context/NotificationContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from './Toast.jsx'
-import EvidencePicker from './EvidencePicker.jsx'
+import EvidencePicker, { selectedEvidenceUrls } from './EvidencePicker.jsx'
 import ClaimSection from './ClaimSection.jsx'
 
 const labels = {
@@ -22,7 +22,7 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
   const [activity, setActivity] = useState({ items: [], page: 0, hasNext: false })
   const [images, setImages] = useState([])
   const [body, setBody] = useState('')
-  const [photos, setPhotos] = useState({ files: [], urls: [] })
+  const [photos, setPhotos] = useState({ files: [], urls: [], draftUrl: '' })
   const [error, setError] = useState('')
   const [loadError, setLoadError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -76,13 +76,13 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
 
   async function upload() {
     const [file] = photos.files
-    const [url] = photos.urls
-    if ((!file && !url) || saving || !canContribute) return
+    if ((!file && !photos.urls.length && !photos.draftUrl?.trim()) || saving || !canContribute) return
     setSaving(true); setError('')
     try {
+      const [url] = selectedEvidenceUrls(photos, 1)
       if (file) await agregarEvidenciaReclamo(id, file, photoKey.current)
       else await agregarEnlaceEvidenciaReclamo(id, url, photoKey.current)
-      setPhotos({ files: [], urls: [] }); photoKey.current = crypto.randomUUID()
+      setPhotos({ files: [], urls: [], draftUrl: '' }); photoKey.current = crypto.randomUUID()
       await load()
       toast('Foto añadida.')
     } catch (e) { setError(e.message); if ([404, 409].includes(e.status)) onUpdated() }
@@ -91,7 +91,7 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
 
   const comments = activity.items.filter((entry) => entry.kind === 'COMMENT')
   const history = activity.items.filter((entry) => entry.kind !== 'COMMENT')
-  const hasPhotos = photos.files.length > 0 || photos.urls.length > 0
+  const hasPhotos = photos.files.length > 0 || photos.urls.length > 0 || !!photos.draftUrl?.trim()
   return (
     <div className="claim-dossier">
       {(error || loadError) && <p className="notice notice--peligro" role="alert">{error || loadError}</p>}
@@ -128,7 +128,8 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
           {image.reference && <figcaption className="muted">Imagen de referencia</figcaption>}
         </figure>)}</div>}
         {canContribute && images.length < 5 && <div className="claim-evidence-upload">
-          <EvidencePicker files={photos.files} urls={photos.urls} max={1} disabled={saving || loading}
+          <EvidencePicker files={photos.files} urls={photos.urls} draftUrl={photos.draftUrl} max={1}
+            onDraftUrlChange={(draftUrl) => { setPhotos((current) => ({ ...current, draftUrl })); photoKey.current = crypto.randomUUID() }} disabled={saving || loading}
             onChange={(files, urls) => { setPhotos({ files, urls }); photoKey.current = crypto.randomUUID() }} />
           {hasPhotos && <button type="button" className="btn btn--primary" disabled={saving} onClick={upload}>
             {saving ? 'Guardando…' : 'Guardar foto'}
