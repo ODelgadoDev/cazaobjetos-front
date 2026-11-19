@@ -37,3 +37,9 @@
 .notice-images img { width: 68px; height: 68px; object-fit: cover; border-radius: 9px; background: var(--superficie-tenue); border: 1px solid var(--linea); }
 .notice-images--pair img { height: 46px; }
 @media (max-width: 400px) { .notice-images { flex-basis: 54px; width: 54px; } .notice-images img { width: 54px; height: 54px; } .notice-images--pair img { height: 40px; } }
+
+.claim-list-card__summary { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.claim-list-card__content { display: grid; gap: 7px; min-width: 0; }
+.claim-list-card__content h3 { font-size: 18px; line-height: 25px; overflow-wrap: anywhere; }
+.claim-list-card__content p { margin: 0; }
+.claim-list-card__state { display: flex; flex-wrap: wrap; }

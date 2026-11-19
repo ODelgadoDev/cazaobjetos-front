@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import * as api from '../lib/api.js'
 import { useNotifications } from '../context/NotificationContext.jsx'
-import { ChipReclamo } from '../components/Chip.jsx'
+import { Chip, ChipReclamo } from '../components/Chip.jsx'
 import { fechaCorta } from '../lib/format.js'
+import ObjectThumbnails from '../components/ObjectThumbnails.jsx'
 import './flujo-simple.css'
 
 const empty = {
@@ -64,19 +65,26 @@ export default function MisReclamos() {
           <h3>{alert.titulo}</h3>
           <Link className="btn btn--secondary" to={`/reclamo/${alert.hallazgoId}`}>Ver hallazgo</Link>
         </article>
-      )) : items.map((claim) => (
-        <article key={claim.id} className="card claim-form-simple">
-          <div className="pager">
-            <h3>{claim.titulo}</h3>
-            <ChipReclamo estado={claim.estado} />
+      )) : items.map((claim) => {
+        const mine = claim.rolEnReclamo ? claim.rolEnReclamo === 'solicitante' : tab === 'activos'
+        const photo = claim.hallazgo?.foto || claim.foto
+        return <article key={claim.id} className="card claim-list-card">
+          <div className="claim-list-card__summary">
+            <ObjectThumbnails images={photo ? [{ url: photo, label: claim.titulo }] : []} />
+            <div className="claim-list-card__content">
+              <h3><Link to={`/reclamos/${claim.id}`}>{claim.titulo}</Link></h3>
+              <div className="claim-list-card__state">{claim.estado === 'aprobado'
+                ? <Chip tipo="ok">{mine ? 'Listo para recoger' : 'Pendiente de entrega'}</Chip>
+                : <ChipReclamo estado={claim.estado} />}</div>
+              <p className="notice-actor">{mine ? 'Gestiona' : 'Solicita'} {mine ? claim.gestor?.nombre || 'Usuario UTCH' : claim.solicitante?.nombre || 'Usuario UTCH'}</p>
+            </div>
           </div>
-          <p className="muted">{tab === 'activos' ? `Gestiona ${claim.gestor?.nombre || 'Usuario UTCH'}` : `Solicita ${claim.solicitante?.nombre || 'Usuario UTCH'}`}</p>
           <div className="btn-row claim-simple-actions">
             <Link className="btn btn--secondary" to={`/reclamos/${claim.id}`}>Ver reclamo</Link>
             {claim.estado === 'entregado' && claim.entrega && <button type="button" className="btn btn--secondary" onClick={() => download(claim)}>Descargar comprobante</button>}
           </div>
         </article>
-      ))}
+      })}
     </>
   )
 }

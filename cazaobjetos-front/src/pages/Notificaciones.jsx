@@ -5,17 +5,9 @@ import { useNotifications } from '../context/NotificationContext.jsx'
 import DeviceNotifications from '../components/DeviceNotifications.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { IconTrash, IconArrowRight } from '../components/Icons.jsx'
+import ObjectThumbnails from '../components/ObjectThumbnails.jsx'
 import './flujo-simple.css'
 
-function NotificationImages({ images }) {
-  const [failed, setFailed] = useState([])
-  const visible = images.filter((image) => !failed.includes(image.url))
-  if (!visible.length) return null
-  return <span className={`notice-images${visible.length > 1 ? ' notice-images--pair' : ''}`}>
-    {visible.map((image) => <img key={image.url} src={image.url} alt={image.label} loading="lazy" referrerPolicy="no-referrer"
-      onError={() => setFailed((current) => [...current, image.url])} />)}
-  </span>
-}
 
 const date = (value) => new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 
@@ -161,7 +153,7 @@ export default function Notificaciones() {
               }}
               onPointerLeave={() => setHovered((current) => current?.notice.id === notice.id ? null : current)}
               onClick={() => open(notice)}>
-              <NotificationImages images={images[notice.id] || []} />
+              <ObjectThumbnails images={images[notice.id] || []} />
               <span className="notification-card__content">
                 <strong className="notice-object">{notice.objectTitle || notice.title}</strong>
                 <span className={`notice-action${notice.kind === 'ACCEPTED' ? ' notice-action--ready' : ''}`}>{notice.kind === 'ACCEPTED' ? 'Listo para recoger' : notice.action || notice.title}</span>
