@@ -60,7 +60,7 @@ const person = (user) => ({
   matricula: user.studentNumber ?? null,
   fotoPerfil: user.avatarVersion ? `${BASE}/auth/me/photo?v=${encodeURIComponent(user.avatarVersion)}` : null,
 })
-const knownPerson = (id, nombre) => id === usuario?.id ? usuario : { id, nombre: nombre || 'Usuario UTCH' }
+const knownPerson = (id, nombre, carrera) => id === usuario?.id ? { ...usuario, carrera: carrera === undefined ? usuario.carrera : carrera } : { id, nombre: nombre || 'Usuario UTCH', carrera }
 const routeFor = (tipo) => tipo === 'hallazgos' ? '/found-items' : '/lost-reports'
 const office = 'Oficina de profesores · mesa de objetos perdidos · edificio I'
 
@@ -139,7 +139,7 @@ function mapFound(item, images = [], claims = [], delegates = []) {
     resguardo: { OFFICE: 'oficina', WITH_TEACHER: 'docente', WITH_FINDER: 'persona' }[item.custody],
     custodia: item.custody === 'OFFICE' ? (item.custodyLocation || office) : item.custody === 'WITH_TEACHER' ? `Con ${item.teacherName}${item.custodyLocation ? ' · ' + item.custodyLocation : ''}` : null,
     docente: item.teacherName || '', ubicacionResguardo: item.custodyLocation || '',
-    autor: knownPerson(item.reporterId, item.reporterName), gestor: delegates.find((d) => d.id === item.responsibleId) || knownPerson(item.responsibleId, item.responsibleName),
+    autor: knownPerson(item.reporterId, item.reporterName, item.reporterDegree), gestor: delegates.find((d) => d.id === item.responsibleId) || knownPerson(item.responsibleId, item.responsibleName, item.responsibleDegree),
     fecha: item.foundOn, lugar: item.foundLocation, descripcionPublica: item.description,
     fotos: images, foto: images[0]?.url || null, permisos: permissionsFound(item, claims),
     reclamoActivoId: claims.find((claim) => claim.foundItemId === item.id && claim.claimantId === usuario?.id && activeClaim(claim))?.id || null,
@@ -152,7 +152,7 @@ function mapLost(item, images = [], claims = []) {
   return {
     id: item.id, folio: folio('EXT', item.id), titulo: item.title, categoria: categoryLabels[item.category],
     estado: { ACTIVE: 'activo', RECOVERED: 'recuperado', WITHDRAWN: 'retirado' }[item.status],
-    autor: knownPerson(item.ownerId, item.ownerName), fecha: item.lostOn, lugar: item.lostLocation, descripcion: item.description, tieneRespuesta: !!item.hasResponse,
+    autor: knownPerson(item.ownerId, item.ownerName, item.ownerDegree), fecha: item.lostOn, lugar: item.lostLocation, descripcion: item.description, tieneRespuesta: !!item.hasResponse,
     fotos: images, foto: images[0]?.url || null, alertas: false,
     permisos: { editar: mine, editarFotos: mine && !linked, vincular: mine && !linked, retirar: mine && !linked, marcarRecuperado: mine && !linked },
   }

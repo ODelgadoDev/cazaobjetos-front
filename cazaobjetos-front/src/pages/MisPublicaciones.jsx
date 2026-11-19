@@ -1,3 +1,4 @@
+import PersonName from '../components/PersonName.jsx'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import * as api from '../lib/api.js'
@@ -23,7 +24,7 @@ function HallazgoItem({ h, run }) {
       <h3><Link to={`/reclamo/${h.id}`}>{h.titulo}</Link></h3>
       <div className="chips"><ChipHallazgo estado={h.estado} custodia={h.custodia} /></div>
       <p className="account-help">{h.lugar} · {fechaCorta(h.fecha)}</p>
-      {h.autor?.nombre && <p className="account-help">Publicado por {h.autor.nombre}</p>}
+      {h.autor?.nombre && <p className="account-help">Publicado por <PersonName name={h.autor.nombre} degree={h.autor.carrera} /></p>}
 
       {abierto === 'resguardo' && <CustodyEditor item={h} onCancel={() => setAbierto(null)} onSaved={() => { setAbierto(null); run(async () => {}, 'Resguardo actualizado.') }} />}
 
@@ -50,7 +51,7 @@ function ExtravioItem({ e, run }) {
       <h3><Link to={`/extravio/${e.id}`}>{e.titulo}</Link></h3>
       <div className="chips"><ChipExtravio estado={e.estado} />{(e.tieneRespuesta || e.estado === 'encontrado') && <Chip tipo="ok">Posible hallazgo</Chip>}</div>
       <p className="account-help">{e.lugar} · {fechaCorta(e.fecha)}</p>
-      {e.autor?.nombre && <p className="account-help">Publicado por {e.autor.nombre}</p>}
+      {e.autor?.nombre && <p className="account-help">Publicado por <PersonName name={e.autor.nombre} degree={e.autor.carrera} /></p>}
       {(p.marcarRecuperado || p.editar || p.retirar) && <div className="acciones">
         {e.tieneRespuesta && <Link className="btn btn--primary" to={`/extravio/${e.id}`}>Ver respuestas</Link>}
         {p.marcarRecuperado && !e.tieneRespuesta && (

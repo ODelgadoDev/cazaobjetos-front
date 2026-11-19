@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import LostResponseCustodyFields, { DEFAULT_OFFICE } from '../components/LostResponseCustodyFields.jsx'
+import PersonName from '../components/PersonName.jsx'
 import ImageAttachment from '../components/ImageAttachment.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { getExtravio, USE_MOCK } from '../lib/api.js'
@@ -20,6 +22,8 @@ function ResponseForm({ id }) {
   const [existing, setExisting] = useState(null)
   const [location, setLocation] = useState('')
   const [body, setBody] = useState('')
+  const [custody, setCustody] = useState('WITH_FINDER')
+  const [custodyLocation, setCustodyLocation] = useState(DEFAULT_OFFICE)
   const [image, setImage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -46,10 +50,10 @@ function ResponseForm({ id }) {
 
   async function send(event) {
     event.preventDefault()
-    const fields = { location: location.trim(), body: body.trim(), image }
+    const fields = { location: location.trim(), body: body.trim(), image, custody, custodyLocation: custody === 'OFFICE' ? custodyLocation.trim() : null }
     if (busy || !fields.location || !fields.body) return
     const previous = attempt.current
-    if (!previous || previous.location !== fields.location || previous.body !== fields.body || previous.image !== image) {
+    if (!previous || previous.location !== fields.location || previous.body !== fields.body || previous.image !== image || previous.custody !== custody || previous.custodyLocation !== fields.custodyLocation) {
       attempt.current = { ...fields, key: crypto.randomUUID() }
     }
     setBusy(true)
@@ -85,7 +89,7 @@ function ResponseForm({ id }) {
     </section>
   }
   return <form className="card" onSubmit={send}>
-    <p className="lost-response__byline"><strong>{usuario.nombre}</strong>{report.autor?.nombre && <> → {report.autor.nombre}</>}</p>
+    <p className="lost-response__byline"><PersonName name={usuario.nombre} degree={usuario.carrera} />{report.autor?.nombre && <> → <PersonName name={report.autor.nombre} degree={report.autor.carrera} /></>}</p>
     <div className="field">
       <label htmlFor="response-location">¿Dónde lo encontraste?</label>
       <input id="response-location" className="input" value={location} onChange={(event) => setLocation(event.target.value)} required maxLength={200} disabled={busy} />
@@ -94,6 +98,7 @@ function ResponseForm({ id }) {
       <label htmlFor="response-body">Mensaje privado</label>
       <textarea id="response-body" className="textarea" value={body} onChange={(event) => setBody(event.target.value)} required maxLength={2000} disabled={busy} />
     </div>
+    <LostResponseCustodyFields custody={custody} location={custodyLocation} onCustodyChange={setCustody} onLocationChange={setCustodyLocation} disabled={busy} />
     <ImageAttachment compact value={image} onChange={setImage} disabled={busy} />
     {error && <div className="notice notice--peligro" role="alert">{error}</div>}
     <button type="submit" className="btn btn--primary" disabled={busy || !location.trim() || !body.trim()}>{busy ? 'Enviando…' : 'Enviar respuesta'}</button>

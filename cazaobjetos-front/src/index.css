@@ -696,3 +696,9 @@ html[data-theme="dark"] .topbar .install-btn { background: transparent; border-c
 .claim-section__body { padding-top: 12px; }
 .push-invitation .btn-row { margin-top: 12px; }
 #claim-next, #claim-object, #claim-evidence, #claim-comments, #q { scroll-margin-top: 96px; }
+
+.person-name { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 3px 8px; min-width: 0; overflow-wrap: anywhere; }
+.person-name__degree { color: var(--texto-tenue); font-size: 12px; font-weight: 400; line-height: 1.4; }
+.conversation-author { display: inline-flex; align-items: center; gap: 9px; min-width: 0; max-width: 100%; }
+.conversation-author__avatar { width: 32px; height: 32px; font-size: 12px; flex: 0 0 32px; }
+.lost-response__head:has(.conversation-author) { align-items: center; }

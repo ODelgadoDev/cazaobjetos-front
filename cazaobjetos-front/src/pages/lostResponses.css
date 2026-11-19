@@ -11,3 +11,15 @@
 .lost-response__form { display: grid; gap: 8px; margin-top: 12px; }
 .lost-response__form > label { color: var(--texto-tenue); font-size: 13px; }
 .lost-legacy-links { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+
+.response-custody { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-left: 3px solid var(--verde-oscuro); background: var(--superficie-tenue); border-radius: 8px; padding: 12px 14px; }
+.response-custody strong { display: block; color: var(--verde-oscuro); margin-bottom: 4px; }
+.response-custody p { overflow-wrap: anywhere; }
+.response-custody-fields { display: grid; gap: 12px; border: 0; margin: 0 0 16px; padding: 0; min-width: 0; }
+.response-custody-fields legend { font-weight: 700; padding: 0 0 8px; font-size: 14px; }
+.response-custody-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.response-custody-option { display: flex; align-items: center; flex: 1 1 185px; gap: 8px; padding: 12px; border: 1px solid var(--linea); border-radius: 10px; cursor: pointer; }
+.response-custody-option.is-selected { background: var(--superficie-tenue); border-color: var(--verde-oscuro); }
+.response-custody-option input { accent-color: var(--verde-oscuro); flex: 0 0 auto; }
+.response-custody-option:has(input:focus-visible) { outline: 2px solid var(--verde-oscuro); outline-offset: 2px; }
+.response-custody-option:has(input:disabled) { opacity: .55; cursor: default; }

@@ -1,3 +1,4 @@
+import ConversationAuthor from './ConversationAuthor.jsx'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { agregarEnlaceEvidenciaReclamo, agregarEvidenciaReclamo, comentarReclamo, getActividadReclamo, getEvidenciasReclamo } from '../lib/api.js'
 import { useNotifications } from '../context/NotificationContext.jsx'
@@ -99,13 +100,13 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
         {!loading && !comments.length && <p className="muted">Sin comentarios.</p>}
         {comments.length > 0 && <ol className="claim-timeline">
           {[...comments].reverse().map((entry) => <li key={entry.id} className="claim-entry claim-entry--comment">
-            <header><strong>{entry.actorName}</strong><time dateTime={entry.createdAt}>{date(entry.createdAt)}</time></header>
+            <header><ConversationAuthor name={entry.actorName} degree={entry.actorDegree} avatarVersion={entry.actorAvatarVersion} photoPath={entry.actorId ? `/claims/${id}/authors/${entry.actorId}/photo` : null} /><time dateTime={entry.createdAt}>{date(entry.createdAt)}</time></header>
             <p>{entry.body}</p>
           </li>)}
         </ol>}
         {canContribute && <form className="claim-comment-form" onSubmit={send}>
           <div className="field">
-            <label htmlFor={`comment-${id}`}>Comentar · {usuario.nombre}</label>
+            <label htmlFor={`comment-${id}`}><ConversationAuthor name={usuario.nombre} degree={usuario.carrera} photo={usuario.fotoPerfil} /></label>
             <textarea id={`comment-${id}`} className="textarea" value={body} maxLength={2000} disabled={saving}
               placeholder="Coordina la entrega o pregunta por el objeto" onChange={(e) => setBody(e.target.value)} />
           </div>
@@ -115,7 +116,7 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
         {history.length > 0 && <details className="claim-attachments">
           <summary>Historial</summary>
           <ol className="claim-timeline claim-section__body">{[...history].reverse().map((entry) => <li key={entry.id} className="claim-entry">
-            <header><strong>{entry.actorName}</strong><time dateTime={entry.createdAt}>{date(entry.createdAt)}</time></header>
+            <header><ConversationAuthor name={entry.actorName} degree={entry.actorDegree} avatarVersion={entry.actorAvatarVersion} photoPath={entry.actorId ? `/claims/${id}/authors/${entry.actorId}/photo` : null} /><time dateTime={entry.createdAt}>{date(entry.createdAt)}</time></header>
             <p>{entry.kind === 'REJECTED' && entry.body ? entry.body : labels[entry.kind] || entry.body}</p>
           </li>)}</ol>
         </details>}

@@ -1,3 +1,4 @@
+import PersonName from '../components/PersonName.jsx'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -24,6 +25,7 @@ function LostReport({ id }) {
   const [report, setReport] = useState(null)
   const [replies, setReplies] = useState([])
   const [legacy, setLegacy] = useState(null)
+  const [revision, setRevision] = useState(0)
   const [legacyPage, setLegacyPage] = useState(0)
   const reportRequest = useRef(0)
   const [error, setError] = useState('')
@@ -59,7 +61,7 @@ function LostReport({ id }) {
       if (!controller.signal.aborted) setLoadingReplies(false)
     })
     return () => controller.abort()
-  }, [id, version])
+  }, [id, version, revision])
 
   const mine = report?.autor?.id === usuario.id
   useEffect(() => {
@@ -70,6 +72,12 @@ function LostReport({ id }) {
     }).catch(() => {})
     return () => { active = false }
   }, [id, mine, legacyPage])
+
+  async function refreshResponse(updated) {
+    if (updated?.id) setReplies((current) => current.map((row) => row.id === updated.id ? updated : row))
+    setRevision((value) => value + 1)
+    await loadReport()
+  }
 
   async function recover() {
     if (busy || !window.confirm('¿Ya tienes el objeto?')) return
@@ -101,7 +109,7 @@ function LostReport({ id }) {
         {active && openResponses ? <Chip tipo="ok">Posible hallazgo</Chip> : <ChipExtravio estado={report.estado} />}
       </div>
       <div className="lost-response__byline">
-        <strong>{report.autor?.nombre}</strong>
+        <PersonName name={report.autor?.nombre} degree={report.autor?.carrera} />
         <time dateTime={report.fecha}>{fechaCorta(report.fecha)}</time>
       </div>
       <div>{report.lugar} · {report.categoria}</div>
@@ -125,7 +133,7 @@ function LostReport({ id }) {
     {replies.length > 0 && <section className="lost-responses" aria-label="Respuestas privadas">
       <h2 className="section-title">Respuestas</h2>
       {replies.map((response) => <LostResponseThread key={response.id} response={response} reportActive={active}
-        selected={hash === `#respuesta-${response.id}`} onChanged={loadReport} />)}
+        selected={hash === `#respuesta-${response.id}`} onChanged={refreshResponse} />)}
     </section>}
     {(legacy?.items.length > 0 || legacyPage > 0) && <section className="card">
       <h2 className="section-title">Hallazgos vinculados</h2>

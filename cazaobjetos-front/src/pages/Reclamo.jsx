@@ -1,3 +1,4 @@
+import PersonName from '../components/PersonName.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { USE_MOCK, crearReclamo, getHallazgo, misExtraviosParaReclamo } from '../lib/api.js'
@@ -124,7 +125,7 @@ function Hallazgo({ id }) {
     <section className="card claim-form-simple" aria-label="Hallazgo">
       <div className="pager"><span className="folio">{item.folio}</span><ChipHallazgo estado={item.estado} /></div>
       <h2>{item.titulo}</h2>
-      <p className="muted">Publicado por {item.autor?.nombre || item.gestor?.nombre || 'Usuario UTCH'}</p>
+      <p className="muted">Publicado por <PersonName name={item.autor?.nombre || item.gestor?.nombre || 'Usuario UTCH'} degree={item.autor?.carrera || item.gestor?.carrera} /></p>
       <p>{item.lugar} · {fechaCorta(item.fecha)}</p>
       {item.custodia && <p>{item.custodia}</p>}
       {item.descripcionPublica && <p>{item.descripcionPublica}</p>}

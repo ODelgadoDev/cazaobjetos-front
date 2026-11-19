@@ -1,3 +1,4 @@
+import PersonName from './PersonName.jsx'
 import { Link } from 'react-router-dom'
 import { Chip, ChipExtravio, ChipHallazgo } from './Chip.jsx'
 import { IconArrowRight, IconCalendar, IconImage, IconPin } from './Icons.jsx'
@@ -26,7 +27,7 @@ export default function ObjectCard({ h }) {
         <div><IconCalendar width={16} height={16} /> <span><span className="k">Encontrado:</span> {fechaCorta(h.fecha)}</span></div>
         <div><IconPin width={16} height={16} /> <span><span className="k">Lugar:</span> {h.lugar}</span></div>
       </div>
-      {h.autor?.nombre && <p className="account-help">Publicado por {h.autor.nombre}</p>}
+      {h.autor?.nombre && <p className="account-help">Publicado por <PersonName name={h.autor.nombre} degree={h.autor.carrera} /></p>}
       <Link to={`/reclamo/${h.id}`} className="btn btn--primary">
         Ver hallazgo <IconArrowRight width={18} height={18} />
       </Link>
@@ -48,7 +49,7 @@ export function ExtravioCard({ e }) {
         <div><IconCalendar width={16} height={16} /> <span><span className="k">Perdido:</span> {fechaCorta(e.fecha)}</span></div>
         <div><IconPin width={16} height={16} /> <span><span className="k">Lugar:</span> {e.lugar}</span></div>
       </div>
-      {e.autor?.nombre && <p className="account-help">Publicado por {e.autor.nombre}</p>}
+      {e.autor?.nombre && <p className="account-help">Publicado por <PersonName name={e.autor.nombre} degree={e.autor.carrera} /></p>}
       <Link to={`/extravio/${e.id}`} className="btn btn--secondary">
         Ver ficha <IconArrowRight width={18} height={18} />
       </Link>
