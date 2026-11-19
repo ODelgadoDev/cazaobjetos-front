@@ -334,9 +334,10 @@ export async function crearReclamo(data) {
 // -> { activos, porRevisar, alertas, historial }
 export async function misReclamos() {
   if (!USE_MOCK) return real.misReclamos()
-  const mios = db.reclamos.filter((r) => r.solicitante.id === yo.id).map((r) => ({ ...r, gestor: hallazgoDe(r)?.gestor, custodia: hallazgoDe(r)?.custodia }))
+  const mios = db.reclamos.filter((r) => r.solicitante.id === yo.id).map((r) => ({ ...r, hallazgo: hallazgoDe(r), gestor: hallazgoDe(r)?.gestor, custodia: hallazgoDe(r)?.custodia }))
   const porRevisar = db.reclamos
     .filter((r) => hallazgoDe(r)?.gestor.id === yo.id && ESTADOS_ACTIVOS.includes(r.estado))
+    .map((r) => ({ ...r, hallazgo: hallazgoDe(r), gestor: hallazgoDe(r)?.gestor }))
   return wait({
     activos: mios.filter((r) => ESTADOS_ACTIVOS.includes(r.estado)),
     porRevisar,

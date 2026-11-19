@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import * as api from '../lib/api.js'
 import ClaimProgress from '../components/ClaimProgress.jsx'
+import ClaimNextStep from '../components/ClaimNextStep.jsx'
 import { useNotifications } from '../context/NotificationContext.jsx'
 import { useSearchParams } from 'react-router-dom'
 import { useToast } from '../components/Toast.jsx'
@@ -75,9 +76,7 @@ export default function MisReclamos() {
               <h3><Link to={`/reclamos/${r.id}`}>{r.titulo}</Link></h3>
               <ClaimProgress estado={r.estado} />
 
-              {['enviado', 'en_revision'].includes(r.estado) && (
-                <div className="notice notice--info"><span>Consulta el expediente para aportar pruebas y conversar en los comentarios. {r.gestor && <>Responsable: <b>{r.gestor.nombre}</b>.</>}</span></div>
-              )}
+              <ClaimNextStep claim={r} role="solicitante" />
               {r.estado === 'requiere_pruebas' && (
                 <>
                   <div className="notice notice--pend"><span><b>Te piden más información:</b> {r.observaciones || 'Agrega otro detalle que solo el dueño conozca.'}</span></div>
@@ -93,9 +92,8 @@ export default function MisReclamos() {
               )}
               {r.estado === 'aprobado' && (
                 <>
-                  <div className="notice notice--ok"><span>Solicitud aceptada. Recógelo {r.custodia ? <>en <b>{r.custodia}</b></> : 'en el encuentro acordado'} con tu credencial.</span></div>
                   <button className="btn btn--primary" onClick={() => { if (window.confirm('¿Confirmas que ya tienes tu objeto? Se cerrará el reclamo.')) run(() => api.marcarRecuperado(r.id), 'Listo. Reclamo cerrado.') }}>
-                    <IconCheck width={18} height={18} /> Ya recuperé mi objeto
+                    <IconCheck width={18} height={18} /> Ya recibí mi objeto
                   </button>
                 </>
               )}
@@ -125,7 +123,7 @@ export default function MisReclamos() {
               {api.USE_MOCK && r.estado === 'enviado' && (
                 <button className="btn btn--primary" onClick={() => run(() => api.iniciarRevision(r.id), 'Revisión iniciada.')}>Iniciar revisión</button>
               )}
-              {!api.USE_MOCK && r.estado === 'enviado' && <p className="account-help">Revisa las pruebas y los comentarios del expediente antes de aceptar o rechazar.</p>}
+              <ClaimNextStep claim={r} role="responsable" />
               {api.USE_MOCK && r.estado === 'en_revision' && (
                 <>
                   <button className="btn btn--primary" onClick={() => run(() => api.aprobarReclamo(r.id), 'Propiedad validada. Coordina la entrega en los comentarios.')}>
@@ -139,7 +137,6 @@ export default function MisReclamos() {
               )}
               {r.estado === 'requiere_pruebas' && <div className="notice notice--pend"><span>Esperando respuesta del solicitante.</span></div>}
               <Link className="link-green" to={`/reclamos/${r.id}`}>Abrir expediente</Link>
-              {r.estado === 'aprobado' && <div className="notice notice--ok"><span>Solicitud aceptada. Coordina la entrega en los comentarios del expediente. El solicitante confirma al recibirlo.</span></div>}
             </article>
           ))}
           {!data.porRevisar.length && <p className="empty">No tienes solicitudes por revisar. Aquí llegan los reclamos de los objetos que gestionas.</p>}

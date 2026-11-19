@@ -126,10 +126,11 @@ export default function Reclamo() {
           <label htmlFor="detalles">
             Detalles que prueban que es tuyo <span className="chip chip--req">Obligatorio</span>
           </label>
-          <textarea id="detalles" className="textarea" disabled={enviando} maxLength={2000} placeholder="ej. qué hay dentro del bolsillo frontal, marca del llavero, stickers…" value={detalles} onChange={(e) => setDetalles(e.target.value)} aria-describedby="detalles-ayuda" />
+          <textarea id="detalles" className="textarea" disabled={enviando} maxLength={2000} placeholder="ej. qué hay dentro del bolsillo frontal, marca del llavero, stickers…" value={detalles} onChange={(e) => setDetalles(e.target.value)} aria-describedby="detalles-ayuda detalles-privacidad" />
           <span id="detalles-ayuda" className={`help ${detalles && !detallesOk ? 'help--error' : ''}`}>
             Mín. {MIN} caracteres ({detalles.trim().length}/{MIN})
           </span>
+          <p className="account-help" id="detalles-privacidad">Estos detalles son privados. Solo tú y la persona que revisa tu solicitud pueden verlos.</p>
         </div>
 
         <EvidencePicker files={evidencias} onChange={setEvidencias} disabled={enviando} />

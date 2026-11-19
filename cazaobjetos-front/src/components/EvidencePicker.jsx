@@ -21,7 +21,7 @@ export default function EvidencePicker({ files, onChange, disabled = false, max 
   return (
     <div className="evidence-picker">
       <label htmlFor={id} className="label"><span><IconImage width={17} height={17} /> Adjuntar imágenes de prueba</span><span className="muted">Opcional</span></label>
-      <p className="account-help" id={`${id}-help`}>JPG o PNG · hasta 5 MB y 12 megapíxeles por imagen. Solo las ven los participantes del reclamo.</p>
+      <p className="account-help" id={`${id}-help`}>JPG o PNG · hasta 5 MB y 12 megapíxeles por imagen. Estas pruebas son privadas. Solo el solicitante y la persona que revisa el reclamo pueden verlas.</p>
       {files.length < max && <input id={id} type="file" className="input" multiple accept="image/jpeg,image/png" disabled={disabled} onChange={select} aria-describedby={`${id}-help`} aria-label="Adjuntar imágenes de prueba" />}
       <div className="evidence-grid">{files.map((file, index) => <figure className="evidence-preview" key={`${file.name}-${index}`}>
         <img src={previews[index]} alt={`Vista previa de evidencia ${index + 1}`} />
