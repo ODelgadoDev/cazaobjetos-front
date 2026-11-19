@@ -17,7 +17,7 @@ Cuentas demo del backend: `alumno.demo@utch.edu.mx`, `reclamante.demo@utch.edu.m
 
 ## Registro y correo local
 
-El buzón Mailpit está en http://127.0.0.1:8025. Para registrar una cuenta ficticia usa Crear cuenta, abre el mensaje de Mailpit y pega el código completo de 43 caracteres en Verificar correo. La contraseña requiere al menos 12 caracteres y admite hasta 72 bytes UTF-8.
+Si el backend local tiene habilitado el correo de desarrollo, consulta el buzón Mailpit en http://127.0.0.1:8025. Para registrar una cuenta ficticia usa Crear cuenta, abre el mensaje de Mailpit y pega el código completo de 43 caracteres en Verificar correo. La contraseña requiere al menos 12 caracteres y admite hasta 72 bytes UTF-8.
 
 La recuperación de contraseña usa otro código de 43 caracteres. Cambiarla revoca las sesiones anteriores y devuelve a la pantalla de acceso. Las pruebas locales capturan el correo en Mailpit. La entrega institucional real requiere la configuración SMTP autorizada del backend.
 
@@ -39,7 +39,7 @@ La recuperación de contraseña usa otro código de 43 caracteres. Cambiarla rev
 
 Todas las rutas de la tabla llevan `/api/v1`. Las escrituras incluyen CSRF y la sesión usa cookies. El adaptador traduce enums, fechas sin hora, IDs UUID y páginas que comienzan en cero. Los formularios de creación conservan una clave de idempotencia para los reintentos. Las publicaciones conservan su historial al retirarse.
 
-El MVP permite aceptar/rechazar un reclamo, cancelarlo y confirmar su recepción después de aceptarlo. La comunicación adicional se realiza por correo institucional. Las acciones adicionales del demo (vigilancia, petición de pruebas, adjuntos privados y alertas automáticas de coincidencia) solo se presentan en modo de datos ficticios. Las fotos actuales se guardan en PostgreSQL. El bucket local sigue pendiente. Los extravíos ya admiten imagen opcional desde archivo, pegado o enlace HTTPS directo, con etiqueta de referencia.
+En la rama de prueba se puede responder «Lo encontré» desde el reporte original. El canal privado conserva la respuesta, las imágenes opcionales y los comentarios. El dueño confirma la recepción desde ese expediente. Los hallazgos independientes mantienen su propio flujo de reclamo.
 
 ## Comprobaciones locales del 17 de noviembre de 2026
 
