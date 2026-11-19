@@ -85,7 +85,7 @@ export async function registrar({ nombre, correo, password, carrera, edificio })
   const problem = profileError({ nombre, carrera, edificio })
   if (problem) return fail(problem)
   const c = correo.trim().toLowerCase()
-  if (db.usuarios[c] || db.pendientes[c]) return fail('Ya existe una cuenta con ese correo. Inicia sesión o recupera tu contraseña.')
+  if (db.usuarios[c] || db.pendientes[c]) return fail('Este correo ya está registrado. Inicia sesión o verifica tu cuenta.')
   const id = nextId++
   db.pendientes[c] = { id, nombre: nombre.trim(), correo: c, matricula: studentNumber(c, 'estudiante'), carrera: carrera.trim(), edificio: edificio.trim(), rol: 'estudiante' }
   db.passwords[c] = password
