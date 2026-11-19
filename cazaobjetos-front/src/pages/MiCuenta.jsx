@@ -86,7 +86,7 @@ function DatosPerfil({ perfil, disabled, onSaved, onBusy }) {
     return (
       <div className={`field${name === 'carrera' ? ' account-field--wide' : ''}`} key={name}>
         <label htmlFor={`perfil-${name}`}>{label}{!required && <span className="account-optional">Opcional</span>}</label>
-        <input id={`perfil-${name}`} name={name} className="input" value={form[name]} maxLength={max} placeholder={placeholder} autoComplete={autoComplete || 'off'} required={required} minLength={required ? 3 : undefined}
+        <input id={`perfil-${name}`} name={name} className="input" value={form[name]} maxLength={max} placeholder={placeholder} autoComplete={autoComplete || 'off'} required={required} minLength={name === 'nombre' ? 3 : undefined}
           onChange={(e) => { setForm((old) => ({ ...old, [name]: e.target.value })); setError('') }} />
       </div>
     )
@@ -100,7 +100,7 @@ function DatosPerfil({ perfil, disabled, onSaved, onBusy }) {
       </fieldset>
       <fieldset className="account-section account-section--academic" disabled={disabled}>
         <legend className="account-section__title">Información académica</legend>
-        <p className="account-help">Agrega los datos que te resulten útiles. Puedes dejarlos vacíos o cambiarlos después.</p>
+        <p className="account-help">Carrera y edificio son obligatorios. Los demás datos son opcionales.</p>
         <div className="account-fields">{PROFILE_FIELDS.slice(2).map(field)}</div>
       </fieldset>
       {error && <div className="notice notice--peligro" role="alert">{error}</div>}

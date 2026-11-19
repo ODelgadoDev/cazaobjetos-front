@@ -78,13 +78,16 @@ export async function login(email, password) {
   return wait({ token: 'mock-token', usuario: u })
 }
 
-// data: { nombre, correo, password } -> el back envía un código al correo
-export async function registrar({ nombre, correo, password }) {
-  if (!USE_MOCK) return real.registrar({ nombre, correo, password })
+// data: { nombre, correo, password, carrera, edificio } -> el back envía un código al correo
+export async function registrar({ nombre, correo, password, carrera, edificio }) {
+  if (!USE_MOCK) return real.registrar({ nombre, correo, password, carrera, edificio })
+  if (!studentNumber(correo, 'estudiante')) return fail('Usa un correo de alumno: a + 10 dígitos + @utch.edu.mx.')
+  const problem = profileError({ nombre, carrera, edificio })
+  if (problem) return fail(problem)
   const c = correo.trim().toLowerCase()
   if (db.usuarios[c] || db.pendientes[c]) return fail('Ya existe una cuenta con ese correo. Inicia sesión o recupera tu contraseña.')
   const id = nextId++
-  db.pendientes[c] = { id, nombre: nombre.trim(), correo: c, matricula: c.split('@')[0].replace(/\D/g, '') || null, carrera: null, rol: 'estudiante' }
+  db.pendientes[c] = { id, nombre: nombre.trim(), correo: c, matricula: studentNumber(c, 'estudiante'), carrera: carrera.trim(), edificio: edificio.trim(), rol: 'estudiante' }
   db.passwords[c] = password
   return wait({ ok: true })
 }
