@@ -23,7 +23,7 @@ La recuperación de contraseña usa otro código de 43 caracteres. Cambiarla rev
 
 ## Conexión de las pantallas
 
-`src/lib/realApi.js` adapta los modelos de las pantallas al contrato Java. `api.js` selecciona el backend cuando VITE_API_URL tiene valor. El demo anterior puede revisarse con VITE_API_URL vacío usando npm run dev.
+`src/lib/realApi.js` adapta los modelos de las pantallas al contrato Java. El backend real se usa por defecto, incluso sin `VITE_API_URL`; la ruta predeterminada es `/api/v1`. La simulación en memoria requiere `VITE_USE_MOCK=true` y `npm run dev`, y sus cambios se pierden al recargar. Las compilaciones de producción/PWA siempre usan el backend. La activación de cuentas de prueba sin código sigue guardando los datos en PostgreSQL.
 
 | Función | API del backend |
 |---|---|

@@ -2,17 +2,16 @@
  * Capa de datos del front, alineada a los diagramas del back
  * (flujo de devolución, ER, estados del reclamo y secuencia).
  *
- * - Sin VITE_API_URL -> datos de prueba (mock) en memoria.
- * - Con VITE_API_URL -> back real. Los endpoints son el CONTRATO PROPUESTO:
- *   acuérdenlo con quien hace el back y ajusten solo este archivo.
+ * - Backend real por defecto, con /api/v1 cuando no se define VITE_API_URL.
+ * - Los datos simulados en memoria requieren VITE_USE_MOCK=true y modo dev.
+ *   Las compilaciones de producción/PWA siempre usan el backend.
  */
 import * as real from './realApi.js'
 import { normalizedProfile, profileError, profilePhotoError, studentNumber } from './profile.js'
 import { seed } from './mockData.js'
 import { ESTADOS_ACTIVOS, ESTADOS_CERRADOS } from './constants.js'
 
-const BASE = import.meta.env.VITE_API_URL || ''
-export const USE_MOCK = !BASE
+export const USE_MOCK = import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true'
 
 let token = sessionStorage.getItem('co_token') || null
 let yo = null
