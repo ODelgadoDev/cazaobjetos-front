@@ -107,3 +107,6 @@ La campana incluye el panel desplegable **Avisos en este dispositivo**. La activ
 Pulsar una novedad nativa abre el destino y lee únicamente ese aviso; una prueba o recordatorio abre la bandeja sin consumir pendientes. Los recordatorios se guardan en el backend: desactivados, una vez o dos veces al día (10:00/18:00 de Chihuahua). Se envían solo con motivos vigentes. La integración real necesita el backend con V13; el modo ficticio muestra la función deshabilitada.
 
 Se recibió Web Push real cifrado en Chrome con todas las ventanas de la app cerradas. Se comprobaron reapertura, preferencias, permisos rechazados y limpieza al cerrar sesión. Queda probar físicamente Android/iPhone usando HTTPS accesible desde el dispositivo; en iPhone/iPad se abre la PWA desde la pantalla de inicio.
+
+
+Comprobación de persistencia del 19 de noviembre de 2026: los siete campos del perfil y la foto se conservaron al recargar, reiniciar una instancia aislada del backend e iniciar sesión desde un navegador nuevo. Se comprobaron también publicaciones con fotos, reclamos aceptados, evidencias, comentarios, respuestas a extravíos y notificaciones. Se verificó el acceso al backend sin `VITE_API_URL` y se restauró un respaldo en una base separada. La base de la demostración permaneció encendida durante las pruebas.
