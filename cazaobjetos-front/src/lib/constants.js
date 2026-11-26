@@ -44,4 +44,4 @@ export const ROLES = {
 }
 
 export const DOMINIO = '@utch.edu.mx'
-export const MIN_PASSWORD = 12
+export const MIN_PASSWORD = 8

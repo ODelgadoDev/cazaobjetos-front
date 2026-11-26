@@ -1,8 +1,9 @@
+import { PASSWORD_REQUIREMENTS, passwordError } from '../lib/password.js'
 import FormHelp from '../components/FormHelp.jsx'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { USE_MOCK, restablecerPassword, solicitarRecuperacion } from '../lib/api.js'
-import { DOMINIO, MIN_PASSWORD } from '../lib/constants.js'
+import { DOMINIO } from '../lib/constants.js'
 import AuthShell, { VolverAlLogin } from '../components/AuthShell.jsx'
 import { CampoCodigo, useCuentaAtras } from './Verificar.jsx'
 
@@ -37,8 +38,8 @@ export default function Recuperar() {
     e.preventDefault()
     setError('')
     if (!(USE_MOCK ? /^\d{6}$/ : /^[A-Za-z0-9_-]{43}$/).test(codigo.trim())) return setError('Copia el código completo recibido por correo.')
-    if (password.length < MIN_PASSWORD) return setError(`La contraseña debe tener al menos ${MIN_PASSWORD} caracteres.`)
-    if (new TextEncoder().encode(password).length > 72) return setError('La contraseña admite hasta 72 bytes UTF-8.')
+    const passwordProblem = passwordError(password)
+    if (passwordProblem) return setError(passwordProblem)
     if (password !== confirmar) return setError('Las contraseñas no coinciden.')
     setEnviando(true)
     try {
@@ -73,8 +74,8 @@ export default function Recuperar() {
           <CampoCodigo id="rc-codigo" value={codigo} onChange={setCodigo} />
           <div className="field">
             <label htmlFor="rc-pass">Nueva contraseña</label>
-            <input id="rc-pass" className="input" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <span className="help">MÍN. {MIN_PASSWORD} CARACTERES</span>
+            <input id="rc-pass" aria-describedby="rc-pass-ayuda" className="input" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <span id="rc-pass-ayuda" className="help">{PASSWORD_REQUIREMENTS}</span>
           </div>
           <div className="field">
             <label htmlFor="rc-conf">Confirma la contraseña</label>

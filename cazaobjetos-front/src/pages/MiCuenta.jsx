@@ -1,3 +1,4 @@
+import { PASSWORD_REQUIREMENTS, passwordError } from '../lib/password.js'
 import FormHelp from '../components/FormHelp.jsx'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -10,7 +11,7 @@ import LogoutButton from '../components/LogoutButton.jsx'
 import PasswordInput from '../components/PasswordInput.jsx'
 import ProfilePhotoEditor from '../components/ProfilePhotoEditor.jsx'
 import { IconArrowRight, IconBox, IconLock, IconUser } from '../components/Icons.jsx'
-import { MIN_PASSWORD, ROLES } from '../lib/constants.js'
+import { ROLES } from '../lib/constants.js'
 
 function CambiarPassword({ disabled, onBusy }) {
   const toast = useToast()
@@ -24,8 +25,8 @@ function CambiarPassword({ disabled, onBusy }) {
     if (enviando || disabled) return
     setError('')
     if (!f.actual) return setError('Escribe tu contraseña actual.')
-    if (f.nueva.length < MIN_PASSWORD) return setError(`La nueva contraseña debe tener al menos ${MIN_PASSWORD} caracteres.`)
-    if (new TextEncoder().encode(f.nueva).length > 72) return setError('La contraseña admite hasta 72 bytes UTF-8.')
+    const passwordProblem = passwordError(f.nueva)
+    if (passwordProblem) return setError(passwordProblem)
     if (f.nueva === f.actual) return setError('La nueva contraseña debe ser distinta de la actual.')
     if (f.nueva !== f.confirmar) return setError('Las contraseñas nuevas no coinciden.')
     setEnviando(true); onBusy(true)
@@ -49,7 +50,7 @@ function CambiarPassword({ disabled, onBusy }) {
         <div className="field">
           <label htmlFor="c-nueva">Nueva contraseña</label>
           <PasswordInput id="c-nueva" className="input" visibilityLabel="nueva contraseña" autoComplete="new-password" value={f.nueva} onChange={set('nueva')} disabled={disabled} aria-describedby="c-ayuda" />
-          <span id="c-ayuda" className="help">MÍN. {MIN_PASSWORD} CARACTERES</span>
+          <span id="c-ayuda" className="help">{PASSWORD_REQUIREMENTS}</span>
         </div>
         <div className="field">
           <label htmlFor="c-conf">Confirma la nueva contraseña</label>
