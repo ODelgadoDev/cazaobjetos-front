@@ -8,12 +8,13 @@ import InstitutionBrand from './InstitutionBrand.jsx'
 import LogoutButton from './LogoutButton.jsx'
 import UserAvatar from './UserAvatar.jsx'
 import InstallApp from './InstallApp.jsx'
+import WelcomeGuide from './WelcomeGuide.jsx'
 import { IconBell, IconBack, IconBox, IconClipboard, IconGrid, IconPlus, IconSearch, IconShield } from './Icons.jsx'
 
 const TITULOS = {
-  '/': 'Explorar',
-  '/reportar': 'Reportar',
-  '/reclamos': 'Mis reclamos',
+  '/': 'Buscar objetos',
+  '/reportar': 'Publicar',
+  '/reclamos': 'Solicitudes',
   '/publicaciones': 'Mis publicaciones',
   '/cuenta': 'Mi cuenta',
   '/notificaciones': 'Notificaciones',
@@ -22,7 +23,7 @@ const TITULOS = {
 // Pantallas de detalle: muestran botón «Volver» en lugar de la marca
 const DETALLES = [
   [/^\/reclamo\/[^/]+$/, 'Detalle del hallazgo'],
-  [/^\/reclamos\/[^/]+$/, 'Reclamo'],
+  [/^\/reclamos\/[^/]+$/, 'Seguimiento'],
   [/^\/extravio\/[^/]+$/, 'Extravío'],
   [/^\/extravio\/[^/]+\/responder$/, 'Lo encontré'],
   [/^\/editar\/[^/]+\/[^/]+$/, 'Editar publicación'],
@@ -41,15 +42,16 @@ export default function Layout() {
   const titulo = detalle ? detalle[1] : TITULOS[pathname] || 'CazaObjetos'
 
   const items = [
-    { to: '/', label: 'Explorar', icon: <IconGrid />, end: true },
-    { to: '/reportar', label: 'Reportar', icon: <IconPlus /> },
-    { to: '/reclamos', label: 'Reclamos', icon: <IconClipboard /> },
+    { to: '/', label: 'Buscar objetos', icon: <IconGrid />, end: true },
+    { to: '/reportar', label: 'Publicar', icon: <IconPlus /> },
+    { to: '/reclamos', label: 'Solicitudes', icon: <IconClipboard /> },
     { to: '/publicaciones', label: 'Mis publicaciones', title: 'Mis publicaciones', icon: <IconBox /> },
     ...(esStaff ? [{ to: '/vigilancia', label: 'Admin/Vig', icon: <IconShield /> }] : []),
   ]
 
   return (
     <div className="app app--shell">
+      {usuario && <WelcomeGuide key={usuario.id} userId={usuario.id} />}
       <header className="topbar">
         {enReclamo && (
           <button className="back-btn" onClick={() => navigate(-1)} aria-label="Volver">
@@ -58,11 +60,11 @@ export default function Layout() {
         )}
         <div className="topbar__main">
           {!enReclamo && (
-            <Link to="/" aria-label="Ir a Explorar" title="Explorar"><InstitutionBrand /></Link>
+            <Link to="/" aria-label="Ir a Buscar objetos" title="Buscar objetos"><InstitutionBrand /></Link>
           )}
           <h1 className="topbar__title">{titulo}</h1>
         </div>
-        {enReclamo && <Link to="/" className="topbar__institution" aria-label="Ir a Explorar" title="Explorar"><InstitutionBrand compact /></Link>}
+        {enReclamo && <Link to="/" className="topbar__institution" aria-label="Ir a Buscar objetos" title="Buscar objetos"><InstitutionBrand compact /></Link>}
         <div className="topbar__actions">
         <InstallApp compact />
         <AppearanceControl compact />

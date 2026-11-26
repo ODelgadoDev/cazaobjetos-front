@@ -12,7 +12,7 @@ if [[ ! -x node_modules/.bin/vite || ! -f node_modules/.package-lock.json ||
     npm ci
 fi
 
-export CAZA_API_PROXY="${CAZA_API_PROXY:-http://127.0.0.1:18090}"
+export CAZA_API_PROXY="${CAZA_API_PROXY:-http://127.0.0.1:18092}"
 health_url="${CAZA_API_PROXY%/}/api/v1/health"
 backend_pid=''
 frontend_pid=''
@@ -25,7 +25,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 if ! curl --fail --silent --max-time 2 "$health_url" >/dev/null; then
-    backend_dir="${BACKEND_DIR:-../../cazaobjetos-backend-primer-uso}"
+    backend_dir="${BACKEND_DIR:-../../cazaobjetos-backend-minimalista-1.2}"
     [[ -x "$backend_dir/run.sh" ]] || { echo 'No se encontró el backend. Configura BACKEND_DIR con su carpeta.' >&2; exit 1; }
     echo 'Iniciando el backend de prueba. El detalle queda en backend-local.log.'
     setsid "$backend_dir/run.sh" --no-db > backend-local.log 2>&1 &
@@ -38,8 +38,8 @@ if ! curl --fail --silent --max-time 2 "$health_url" >/dev/null; then
     curl --fail --silent --max-time 2 "$health_url" >/dev/null || { echo 'Revisa backend-local.log: el backend no respondió a tiempo.' >&2; exit 1; }
 fi
 
-echo "CazaObjetos: http://127.0.0.1:${FRONTEND_PORT:-4173}"
+echo "CazaObjetos: http://127.0.0.1:${FRONTEND_PORT:-4182}"
 echo 'Ctrl+C para detener la app.'
-setsid env VITE_API_URL=/api/v1 npm run dev -- --host 127.0.0.1 --port "${FRONTEND_PORT:-4173}" --strictPort &
+setsid env VITE_API_URL=/api/v1 npm run dev -- --host 127.0.0.1 --port "${FRONTEND_PORT:-4182}" --strictPort &
 frontend_pid=$!
 wait "$frontend_pid"

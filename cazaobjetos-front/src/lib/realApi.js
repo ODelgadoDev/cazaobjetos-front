@@ -135,6 +135,8 @@ function permissionsFound(item, claims = []) {
   }
 }
 function mapFound(item, images = [], claims = [], delegates = []) {
+  const ownClaims = claims.filter((claim) => claim.foundItemId === item.id && claim.claimantId === usuario?.id)
+  const existing = ownClaims.find(activeClaim) || ownClaims.find((claim) => claim.status === 'COMPLETED')
   return {
     id: item.id, sourceLostReportId: item.sourceLostReportId || null, folio: folio('HAL', item.id), titulo: item.title, categoria: categoryLabels[item.category],
     estado: item.status === 'WITHDRAWN' ? 'retirado' : item.status === 'RETURNED' ? 'entregado' : item.custody !== 'WITH_FINDER' ? 'bajo_custodia' : 'con_finder',
@@ -144,7 +146,7 @@ function mapFound(item, images = [], claims = [], delegates = []) {
     autor: knownPerson(item.reporterId, item.reporterName, item.reporterDegree), gestor: delegates.find((d) => d.id === item.responsibleId) || knownPerson(item.responsibleId, item.responsibleName, item.responsibleDegree),
     fecha: item.foundOn, lugar: item.foundLocation, descripcionPublica: item.description,
     fotos: images, foto: images[0]?.url || null, permisos: permissionsFound(item, claims),
-    reclamoActivoId: claims.find((claim) => claim.foundItemId === item.id && claim.claimantId === usuario?.id && activeClaim(claim))?.id || null,
+    miSolicitudId: existing?.id || null,
     puedeReclamar: item.status === 'AVAILABLE' && item.reporterId !== usuario?.id && item.responsibleId !== usuario?.id,
   }
 }

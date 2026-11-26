@@ -15,10 +15,10 @@ export default function AppearanceControl({ compact = false }) {
   const Icon = resolved === 'dark' ? IconMoon : IconSun
   return (
     <>
-      <button type="button" className={`appearance-button${compact ? ' appearance-button--compact' : ''}`} aria-label="Apariencia" title={`Apariencia: ${modes.find((mode) => mode.value === preference).label}`} aria-haspopup="dialog" onClick={() => setOpen(true)}>
-        <Icon width={20} height={20} />{!compact && <span>Apariencia</span>}
+      <button type="button" className={`appearance-button${compact ? ' appearance-button--compact' : ''}`} aria-label="Tema" title={`Tema: ${modes.find((mode) => mode.value === preference).label}`} aria-haspopup="dialog" onClick={() => setOpen(true)}>
+        <Icon width={20} height={20} />{!compact && <span>Tema</span>}
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Apariencia">
+      <Modal open={open} onClose={() => setOpen(false)} title="Tema">
         <p className="account-help">Elige cómo quieres ver CazaObjetos. Se guardará en este dispositivo.</p>
         <fieldset className="theme-options"><legend className="sr-only">Tema de la aplicación</legend>
           {modes.map(({ value, label, text, Icon }) => (

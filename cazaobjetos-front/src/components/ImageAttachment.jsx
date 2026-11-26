@@ -1,3 +1,4 @@
+import FormHelp from './FormHelp.jsx'
 import { useEffect, useId, useRef, useState } from 'react'
 import { IconImage, IconUpload, IconX } from './Icons.jsx'
 import './ImageAttachment.css'
@@ -80,11 +81,11 @@ export default function ImageAttachment({ value, onChange, disabled = false, com
   const picker = (
     <section className={`image-attachment${compact ? ' image-attachment--compact' : ''}`}
       aria-label={compact ? 'Adjuntar imagen' : undefined} aria-labelledby={compact ? undefined : `${inputId}-title`} onPaste={paste}>
-      {!compact && <div className="image-attachment__heading">
-        <h2 id={`${inputId}-title`}>¿Tienes una foto?</h2>
+      <div className="image-attachment__heading">
+        <h2 id={`${inputId}-title`}>Agregar foto</h2>
         <span className="image-attachment__optional">Opcional</span>
-      </div>}
-      {!compact && <p className="muted">Puedes usar una foto tuya o una imagen de un objeto parecido, de la misma marca o modelo.</p>}
+      </div>
+      <FormHelp title="Cómo agregar una foto">Sube un archivo, pega una imagen o usa un enlace. Si la foto es de un objeto parecido, márcala como imagen de referencia.</FormHelp>
       <div className="image-attachment__methods" role="group" aria-label="Cómo agregar la imagen">
         {['archivo', 'pegar', 'enlace'].map((option) => (
           <button key={option} type="button" className={`filter ${mode === option ? 'is-active' : ''}`}
@@ -133,9 +134,5 @@ export default function ImageAttachment({ value, onChange, disabled = false, com
       {error && <p className="help help--error" role="alert">{error}</p>}
     </section>
   )
-  if (!compact) return picker
-  return <details className="photo-picker">
-    <summary>{value ? 'Foto adjunta' : 'Agregar foto (opcional)'}</summary>
-    {picker}
-  </details>
+  return picker
 }

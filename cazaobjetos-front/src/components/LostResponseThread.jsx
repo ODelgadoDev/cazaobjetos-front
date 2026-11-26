@@ -1,3 +1,5 @@
+import { sendCommentOnEnter } from '../lib/commentKeys.js'
+import FormHelp from './FormHelp.jsx'
 import ConversationAuthor from './ConversationAuthor.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -126,6 +128,7 @@ export default function LostResponseThread({ response, reportActive, selected, o
       {active && !owner && !editingCustody && <button className="btn btn--secondary" type="button" onClick={editCustody} disabled={busy}>Cambiar entrega</button>}
     </div>
     {active && !owner && editingCustody && <form className="lost-response__form" onSubmit={saveCustody}>
+        <FormHelp title="Para qué actualizar la entrega">Indica dónde está ahora el objeto para que la otra persona sepa cómo recogerlo.</FormHelp>
       <LostResponseCustodyFields custody={custody} location={custodyLocation} onCustodyChange={setCustody} onLocationChange={setCustodyLocation} officeLocked={response.custody === 'OFFICE'} disabled={busy} />
       <div className="btn-row">
         <button className="btn btn--primary" type="submit" disabled={busy}>{busy ? 'Guardando…' : 'Guardar entrega'}</button>
@@ -140,8 +143,9 @@ export default function LostResponseThread({ response, reportActive, selected, o
       )}</ol>}
       {opened && !comments && !error && <p className="muted">Cargando comentarios…</p>}
       {active && <form className="lost-response__form" onSubmit={send}>
+        <FormHelp title="Para qué sirve el comentario">Usa este espacio para resolver dudas o acordar la entrega con la otra persona.</FormHelp>
         <label htmlFor={`comentario-${id}`}><ConversationAuthor name={usuario.nombre} degree={usuario.carrera} photo={usuario.fotoPerfil} /></label>
-        <textarea id={`comentario-${id}`} className="textarea" placeholder="Escribe un comentario" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={2000} disabled={busy} />
+        <textarea id={`comentario-${id}`} onKeyDown={sendCommentOnEnter} className="textarea" placeholder="Escribe un comentario" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={2000} disabled={busy} />
         <button type="submit" className="btn btn--secondary" disabled={busy || !draft.trim()}>Enviar comentario</button>
       </form>}
     </details>

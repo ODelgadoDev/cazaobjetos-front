@@ -43,3 +43,20 @@
 .claim-list-card__content h3 { font-size: 18px; line-height: 25px; overflow-wrap: anywhere; }
 .claim-list-card__content p { margin: 0; }
 .claim-list-card__state { display: flex; flex-wrap: wrap; }
+
+
+.claim-progress { list-style: none; padding: 0; margin: 4px 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.claim-progress li { position: relative; display: grid; justify-items: center; align-content: start; gap: 6px; text-align: center; color: var(--texto-tenue); font-size: clamp(.68rem, 2.9vw, .85rem); min-width: 0; }
+.claim-progress li + li::before { content: ''; position: absolute; top: 13px; right: 50%; width: 100%; height: 2px; background: var(--linea); }
+.claim-progress .is-done + .is-current::before, .claim-progress .is-done + .is-done::before { background: var(--verde-oscuro); }
+.claim-progress__number { position: relative; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--linea); border-radius: 50%; background: var(--superficie); font-weight: 700; }
+.claim-progress .is-done { color: var(--verde-oscuro); }
+.claim-progress .is-done .claim-progress__number { border-color: var(--verde-oscuro); background: var(--superficie-tenue); }
+.claim-progress .is-current { color: var(--texto); font-weight: 750; }
+.claim-progress .is-current .claim-progress__number { border: 2px solid currentColor; }
+.photo-options-heading { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0; font-size: 1rem; }
+section.claim-attachments { display: grid; gap: 8px; padding: 12px; }
+.photo-evidence-inputs { display: grid; gap: 8px; min-width: 0; }
+.notice-images { position: relative; }
+.photo__delivered { position: absolute; top: 8px; right: 8px; border-radius: 6px; background: var(--superficie); color: var(--verde-oscuro); padding: 4px 8px; font-weight: 750; font-size: .8rem; }
+.notice-images .photo__delivered { top: auto; bottom: 4px; right: 3px; left: 3px; text-align: center; padding: 2px 0; font-size: .63rem; }

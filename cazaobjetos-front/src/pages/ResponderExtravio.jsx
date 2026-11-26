@@ -1,3 +1,4 @@
+import FormHelp from '../components/FormHelp.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -89,6 +90,7 @@ function ResponseForm({ id }) {
     </section>
   }
   return <form className="card" onSubmit={send}>
+    <FormHelp title="Cómo avisar del hallazgo">Cuenta dónde encontraste el objeto y cómo se puede recoger. La persona que publicó el extravío verá tu respuesta en su reporte.</FormHelp>
     <p className="lost-response__byline"><PersonName name={usuario.nombre} degree={usuario.carrera} />{report.autor?.nombre && <> → <PersonName name={report.autor.nombre} degree={report.autor.carrera} /></>}</p>
     <div className="field">
       <label htmlFor="response-location">¿Dónde lo encontraste?</label>

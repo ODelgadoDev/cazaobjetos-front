@@ -1,3 +1,4 @@
+import FormHelp from '../components/FormHelp.jsx'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import useRegistrationOptions from '../lib/useRegistrationOptions.js'
@@ -63,6 +64,7 @@ export default function Verificar() {
   return (
     <AuthShell titulo="Verifica tu correo" intro={demoVerification ? "Activa tu cuenta de prueba sin código." : loadingMode ? "Preparando la verificación…" : "Ingresa el código que recibiste en tu correo institucional para activar tu cuenta."} pie={<VolverAlLogin />}>
       <form className="card" onSubmit={verificar} noValidate>
+        <FormHelp title="Para qué se activa la cuenta">{demoVerification ? 'Activa la cuenta de prueba con el correo que registraste. Después podrás iniciar sesión con tu contraseña.' : 'Usa el código que llegó a tu correo para activar tu cuenta. Después podrás iniciar sesión.'}</FormHelp>
         {modeError && <div className="notice notice--peligro" role="alert"><span>{modeError}</span><button type="button" className="btn btn--secondary" onClick={retryMode}>Reintentar</button></div>}
         {!loadingMode && !modeError && demoVerification && <div className="notice notice--info" role="status">Modo de prueba · no necesitas recibir un correo.</div>}
         {!loadingMode && !modeError && (aviso || state?.recienCreada) && <div className="notice notice--ok" role="status">{aviso || (demoVerification ? 'Cuenta creada. Pulsa «Verificar correo» para activarla.' : `Cuenta creada. Enviamos un código de verificación a ${state.correo}.`)}</div>}

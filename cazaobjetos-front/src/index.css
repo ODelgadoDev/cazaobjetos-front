@@ -702,3 +702,21 @@ html[data-theme="dark"] .topbar .install-btn { background: transparent; border-c
 .conversation-author { display: inline-flex; align-items: center; gap: 9px; min-width: 0; max-width: 100%; }
 .conversation-author__avatar { width: 32px; height: 32px; font-size: 12px; flex: 0 0 32px; }
 .lost-response__head:has(.conversation-author) { align-items: center; }
+
+
+.form-help { align-self: flex-start; max-width: 100%; min-width: 0; }
+.form-help > summary { display: flex; align-items: center; gap: 7px; color: var(--verde-oscuro); font-size: .875rem; font-weight: 650; cursor: pointer; list-style: none; min-height: 35px; }
+.form-help > summary::-webkit-details-marker { display: none; }
+.form-help__icon { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid currentColor; border-radius: 50%; flex: none; }
+.form-help__bubble { position: relative; margin: 5px 0 4px; padding: 10px 12px; border: 1px solid var(--linea); border-radius: 10px; background: var(--superficie-tenue); color: var(--texto); font-size: .875rem; line-height: 1.45; }
+.form-help__bubble::before { content: ''; position: absolute; top: -5px; left: 8px; width: 8px; height: 8px; background: inherit; border: 1px solid var(--linea); border-right: 0; border-bottom: 0; transform: rotate(45deg); }
+.choice-field { border: 0; padding: 0; margin: 0; min-width: 0; }
+.choice-field legend { font-weight: 650; margin-bottom: 8px; }
+.choice-field__options { display: flex; gap: 8px; flex-wrap: wrap; }
+.choice-field__option { display: flex; align-items: center; gap: 8px; padding: 10px 13px; min-height: 44px; border: 1px solid var(--linea); border-radius: 10px; cursor: pointer; }
+.choice-field__option:has(input:checked) { border-color: var(--verde-oscuro); background: var(--superficie-tenue); color: var(--verde-oscuro); font-weight: 700; }
+.choice-field__option input { accent-color: var(--verde-oscuro); margin: 0; }
+.choice-field__option:has(input:focus-visible) { outline: 2px solid var(--verde-oscuro); outline-offset: 2px; }
+.choice-field__option:has(input:disabled) { cursor: default; opacity: .7; }
+
+.welcome-guide { display: grid; gap: 10px; padding-left: 20px; margin: 0 0 16px; }

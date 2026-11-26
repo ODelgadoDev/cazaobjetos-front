@@ -1,3 +1,4 @@
+import FormHelp from '../components/FormHelp.jsx'
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -49,6 +50,7 @@ export default function Login() {
       }
     >
       <form className="card" onSubmit={onSubmit} noValidate>
+        <FormHelp title="Cómo iniciar sesión">Escribe el correo con el que creaste tu cuenta y tu contraseña. Si la cuenta sigue pendiente, usa «Verificar mi correo».</FormHelp>
         {state?.aviso && <div className="notice notice--ok" role="status">{state.aviso}</div>}
         <div className="field">
           <label htmlFor="email">Correo institucional</label>

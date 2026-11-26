@@ -1,11 +1,13 @@
+import { DOMINIO } from './constants.js'
+
 export const PROFILE_FIELDS = [
   { name: 'nombre', label: 'Nombre completo', max: 120, autoComplete: 'name', required: true },
   { name: 'alias', label: 'Alias', max: 60, autoComplete: 'nickname', placeholder: '¿Cómo te gusta que te llamen?' },
-  { name: 'carrera', label: 'Carrera', max: 160, required: true, placeholder: 'Tu carrera o programa académico' },
+  { name: 'carrera', label: 'Carrera o área', max: 160, required: true, placeholder: 'Tu carrera o programa académico' },
   { name: 'curso', label: 'Curso', max: 120, placeholder: 'Ej. 5.º cuatrimestre' },
   { name: 'grupo', label: 'Grupo', max: 80, placeholder: 'Ej. TI-51' },
   { name: 'salon', label: 'Salón', max: 80, placeholder: 'Ej. I-12' },
-  { name: 'edificio', label: 'Edificio', max: 80, required: true, placeholder: 'Ej. I' },
+  { name: 'edificio', label: 'Edificio', max: 80, placeholder: 'Ej. I' },
 ]
 
 export const profileForm = (user) => Object.fromEntries(PROFILE_FIELDS.map(({ name }) => [name, user?.[name] ?? '']))
@@ -19,6 +21,15 @@ export function profileError(data) {
     if (/[\u0000-\u001f\u007f-\u009f]/.test(clean[name] || '')) return `${label} debe escribirse en una sola línea.`
   }
   return ''
+}
+
+export function institutionalEmail(email) {
+  const normalized = email.trim().toLowerCase()
+  return /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@utch\.edu\.mx$/.test(normalized) ? normalized : ''
+}
+
+export function emailFromStudentNumber(number) {
+  return /^[0-9]{10}$/.test(number) ? `a${number}${DOMINIO}` : ''
 }
 
 export function studentNumber(email, role) {

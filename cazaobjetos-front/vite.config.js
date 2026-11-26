@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const apiTarget = process.env.CAZA_API_PROXY || 'http://127.0.0.1:8080'
+const apiTarget = process.env.CAZA_API_PROXY || 'http://127.0.0.1:18092'
 
 export default defineConfig({
   plugins: [
@@ -52,6 +52,6 @@ export default defineConfig({
       devOptions: { enabled: true, type: 'classic', suppressWarnings: true },
     }),
   ],
-  server: { host: '127.0.0.1', port: 5173, proxy: { '/api': apiTarget } },
-  preview: { host: '127.0.0.1', port: 4173, proxy: { '/api': apiTarget } },
+  server: { host: '127.0.0.1', port: 4182, proxy: { '/api': apiTarget } },
+  preview: { host: '127.0.0.1', port: 4182, proxy: { '/api': apiTarget } },
 })

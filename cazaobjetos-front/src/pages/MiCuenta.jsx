@@ -1,3 +1,4 @@
+import FormHelp from '../components/FormHelp.jsx'
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cambiarPassword, getPerfil, guardarPerfil } from '../lib/api.js'
@@ -38,6 +39,7 @@ function CambiarPassword({ disabled, onBusy }) {
 
   return (
     <form className="account-password" onSubmit={guardar} noValidate>
+      <FormHelp title="Cómo cambiar tu contraseña">Escribe tu contraseña actual y confirma la nueva. Al guardar, vuelve a iniciar sesión con la nueva contraseña.</FormHelp>
       <p className="account-help">Al guardar, se cerrarán tus sesiones y podrás entrar con la nueva contraseña.</p>
       <div className="field">
         <label htmlFor="c-actual">Contraseña actual</label>
@@ -93,6 +95,7 @@ function DatosPerfil({ perfil, disabled, onSaved, onBusy }) {
   }
   return (
     <form className="card account-form" onSubmit={save} noValidate aria-label="Editar perfil">
+      <FormHelp title="Cómo actualizar tu perfil">Edita los datos que quieras corregir y pulsa «Guardar cambios». Tu nombre y carrera o área ayudan a identificar tus publicaciones y comentarios.</FormHelp>
       <fieldset className="account-section" disabled={disabled}>
         <legend className="account-section__title"><IconUser width={20} height={20} /> Tus datos</legend>
         <p className="account-help">Tu nombre identifica tu cuenta. El alias es una forma adicional de presentarte.</p>
@@ -100,7 +103,7 @@ function DatosPerfil({ perfil, disabled, onSaved, onBusy }) {
       </fieldset>
       <fieldset className="account-section account-section--academic" disabled={disabled}>
         <legend className="account-section__title">Información académica</legend>
-        <p className="account-help">Carrera y edificio son obligatorios. Los demás datos son opcionales.</p>
+        <p className="account-help">Tu carrera o área es obligatoria. El edificio y los demás datos son opcionales.</p>
         <div className="account-fields">{PROFILE_FIELDS.slice(2).map(field)}</div>
       </fieldset>
       {error && <div className="notice notice--peligro" role="alert">{error}</div>}
@@ -147,12 +150,12 @@ export default function MiCuenta() {
         <div className="account-summary__heading">
           <p className="account-eyebrow">TU ESPACIO EN CAZAOBJETOS</p>
           <h2>{perfil.nombre}</h2>
-          <div className="account-summary__tags"><Chip tipo="info">{ROLES[perfil.rol] ?? perfil.rol}</Chip>{perfil.alias && <span className="account-alias">Alias: {perfil.alias}</span>}</div>
+          <div className="account-summary__tags"><Chip tipo="info">{perfil.rol === 'estudiante' && !perfil.matricula ? 'Comunidad UTCH' : ROLES[perfil.rol] ?? perfil.rol}</Chip>{perfil.alias && <span className="account-alias">Alias: {perfil.alias}</span>}</div>
         </div>
         <ProfilePhotoEditor perfil={perfil} disabled={disabled} onSaved={update} onBusy={setOcupado} />
         <dl className="account-identifiers">
           <div><dt>Correo institucional</dt><dd>{perfil.correo}</dd></div>
-          <div><dt>Matrícula</dt><dd className="mono">{perfil.matricula || (perfil.rol === 'estudiante' ? 'No disponible en este correo' : 'No aplica a esta cuenta')}</dd></div>
+          <div><dt>Matrícula</dt><dd className="mono">{perfil.matricula || (perfil.rol === 'estudiante' ? 'El correo no incluye matrícula' : 'No aplica a esta cuenta')}</dd></div>
         </dl>
         <p className="account-help">El correo y la matrícula se obtienen de tu cuenta y no se editan aquí.</p>
       </section>

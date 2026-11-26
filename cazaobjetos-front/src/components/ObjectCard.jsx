@@ -4,11 +4,12 @@ import { Chip, ChipExtravio, ChipHallazgo } from './Chip.jsx'
 import { IconArrowRight, IconCalendar, IconImage, IconPin } from './Icons.jsx'
 import { fechaCorta } from '../lib/format.js'
 
-export function Foto({ folio, src, reference = false }) {
+export function Foto({ folio, src, reference = false, delivered = false }) {
   return (
     <div className="photo">
       {folio && <span className="folio">FOLIO {folio}</span>}
       {src ? <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <IconImage width={28} height={28} />}
+      {delivered && <span className="photo__delivered">Entregado</span>}
       {src && reference && <span className="photo__reference">Imagen de referencia</span>}
     </div>
   )
@@ -17,7 +18,7 @@ export function Foto({ folio, src, reference = false }) {
 export default function ObjectCard({ h }) {
   return (
     <article className="card">
-      <Foto src={h.foto} reference={h.fotos?.[0]?.referenceImage} />
+      <Foto src={h.foto} reference={h.fotos?.[0]?.referenceImage} delivered={h.estado === 'entregado'} />
       <h3>{h.titulo}</h3>
       <div className="chips">
         <Chip>{h.categoria}</Chip>
@@ -28,7 +29,7 @@ export default function ObjectCard({ h }) {
         <div><IconPin width={16} height={16} /> <span><span className="k">Lugar:</span> {h.lugar}</span></div>
       </div>
       {h.autor?.nombre && <p className="account-help">Publicado por <PersonName name={h.autor.nombre} degree={h.autor.carrera} /></p>}
-      <Link to={`/reclamo/${h.id}`} className="btn btn--primary">
+      <Link to={`/reclamo/${h.id}`} className={`btn ${h.estado === 'entregado' ? 'btn--secondary' : 'btn--primary'}`}>
         Ver hallazgo <IconArrowRight width={18} height={18} />
       </Link>
     </article>

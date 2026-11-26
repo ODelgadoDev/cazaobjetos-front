@@ -1,3 +1,4 @@
+import FormHelp from '../components/FormHelp.jsx'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import * as api from '../lib/api.js'
@@ -5,6 +6,7 @@ import { useNotifications } from '../context/NotificationContext.jsx'
 import { useToast } from '../components/Toast.jsx'
 import { ChipReclamo } from '../components/Chip.jsx'
 import { Foto } from '../components/ObjectCard.jsx'
+import ClaimProgress, { nextClaimStep } from '../components/ClaimProgress.jsx'
 import ClaimDossier from '../components/ClaimDossier.jsx'
 import CustodyEditor from '../components/CustodyEditor.jsx'
 import ClaimSection from '../components/ClaimSection.jsx'
@@ -71,6 +73,7 @@ function Expediente({ id }) {
   const active = Boolean(claim.puedeAportar)
   const location = item?.custodia || (item?.resguardo === 'persona' ? `Con ${item.autor?.nombre || claim.gestor?.nombre || 'quien lo encontró'}` : '')
   const canDecide = permissions.aceptar || permissions.rechazar
+  const nextStep = nextClaimStep(claim.estado, mine)
 
   function requestMoreDetails() {
     const question = window.prompt('¿Qué detalle necesitas?')?.trim()
@@ -85,6 +88,9 @@ function Expediente({ id }) {
       <section className="card claim-summary" id="claim-next" aria-label="Reclamo">
         <div className="pager"><span className="folio">{claim.folio}</span><ChipReclamo estado={claim.estado} /></div>
         <h2>{claim.titulo}</h2>
+        <ClaimProgress status={claim.estado} />
+        {nextStep && <p className="account-help">{nextStep}</p>}
+        {claim.estado === 'entregado' && item?.foto && <Foto src={item.foto} delivered reference={item.fotos?.[0]?.referenceImage} />}
         {claim.estado === 'aprobado' && <div className="claim-ready" role="status">
           <IconCheck width={28} height={28} />
           <div className="claim-ready__content">
@@ -108,6 +114,7 @@ function Expediente({ id }) {
           if (reason.trim().length >= 10) run(() => api.rechazarReclamo(id, reason.trim()), 'Reclamo rechazado.')
         }}>
           <div className="field">
+            <FormHelp title="Sobre el rechazo">El motivo se comparte con quien hizo la solicitud y queda en el historial.</FormHelp>
             <label htmlFor="reject-reason">Motivo del rechazo</label>
             <textarea id="reject-reason" className="textarea" required value={reason}
               maxLength={2000} disabled={busy} onChange={(e) => setReason(e.target.value)} />
@@ -118,12 +125,12 @@ function Expediente({ id }) {
             <button type="button" className="btn btn--secondary" disabled={busy} onClick={() => setRejecting(false)}>Volver</button>
           </div>
         </form> : <div className="claim-simple-actions">
-          {permissions.aceptar && <button type="button" className="btn btn--primary" disabled={busy} onClick={() => run(() => api.aprobarReclamo(id), 'Reclamo aceptado.')}>Aceptar reclamo</button>}
+          {permissions.aceptar && <button type="button" className="btn btn--primary" disabled={busy} onClick={() => run(() => api.aprobarReclamo(id), 'Reclamo aceptado.')}>Aceptar solicitud</button>}
           {permissions.rechazar && <button type="button" className="btn btn--secondary" disabled={busy} onClick={() => setRejecting(true)}>Rechazar</button>}
           {permissions.confirmarRecibido && <button type="button" className="btn btn--primary" disabled={busy}
             onClick={() => run(() => api.marcarRecuperado(id), 'Entrega confirmada.')}>Confirmar que lo recibí</button>}
           {permissions.cancelar && <button type="button" className="btn btn--link-danger" disabled={busy}
-            onClick={() => { if (window.confirm('¿Cancelar el reclamo?')) run(() => api.cancelarReclamo(id), 'Reclamo cancelado.') }}>Cancelar reclamo</button>}
+            onClick={() => { if (window.confirm('¿Cancelar el reclamo?')) run(() => api.cancelarReclamo(id), 'Reclamo cancelado.') }}>Cancelar solicitud</button>}
         </div>}
         {api.USE_MOCK && (permissions.pedirPruebas || permissions.iniciarRevision) && <details className="claim-attachments">
           <summary>Más acciones</summary>
@@ -134,6 +141,7 @@ function Expediente({ id }) {
           if (answer.trim().length >= 10) run(async () => { await api.responderPruebas(id, answer.trim()); setAnswer('') }, 'Respuesta enviada.')
         }}>
           <div className="field">
+            <FormHelp title="Sobre la respuesta">Quien revisa la solicitud podrá leer esta información en el seguimiento.</FormHelp>
             <label htmlFor="claim-answer">{claim.observaciones || 'Información solicitada'}</label>
             <textarea id="claim-answer" className="textarea" maxLength={2000} disabled={busy}
               value={answer} onChange={(e) => setAnswer(e.target.value)} />

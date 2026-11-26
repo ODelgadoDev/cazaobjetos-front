@@ -20,7 +20,7 @@ function HallazgoItem({ h, run }) {
 
   return (
     <article className="card">
-      <Foto src={h.foto} reference={h.fotos?.[0]?.referenceImage} />
+      <Foto src={h.foto} reference={h.fotos?.[0]?.referenceImage} delivered={h.estado === 'entregado'} />
       <h3><Link to={`/reclamo/${h.id}`}>{h.titulo}</Link></h3>
       <div className="chips"><ChipHallazgo estado={h.estado} custodia={h.custodia} /></div>
       <p className="account-help">{h.lugar} · {fechaCorta(h.fecha)}</p>
@@ -33,7 +33,7 @@ function HallazgoItem({ h, run }) {
           {p.editar && <Link className="btn btn--secondary" to={`/editar/hallazgo/${h.id}`}><IconEdit width={18} height={18} /> Editar</Link>}
           {p.cambiarResguardo && <button className="btn btn--secondary" onClick={() => setAbierto('resguardo')}>Cambiar resguardo</button>}
           {p.retirar && (
-            <button className="btn btn--link-danger" onClick={() => { if (window.confirm(`¿Retirar la publicación ${h.folio}? Dejará de verse en Explorar.`)) run(() => api.retirarHallazgo(h.id), 'Publicación retirada.') }}>
+            <button className="btn btn--link-danger" onClick={() => { if (window.confirm(`¿Retirar la publicación ${h.folio}? Dejará de verse en Buscar objetos.`)) run(() => api.retirarHallazgo(h.id), 'Publicación retirada.') }}>
               <IconTrash width={18} height={18} /> Retirar publicación
             </button>
           )}
@@ -61,7 +61,7 @@ function ExtravioItem({ e, run }) {
         )}
         {p.editar && <Link className="btn btn--secondary" to={`/editar/extravio/${e.id}`}><IconEdit width={18} height={18} /> Editar</Link>}
         {p.retirar && (
-          <button className="btn btn--link-danger" onClick={() => { if (window.confirm(`¿Retirar el reporte ${e.folio}? Dejará de verse en Explorar.`)) run(() => api.retirarExtravio(e.id), 'Reporte retirado.') }}>
+          <button className="btn btn--link-danger" onClick={() => { if (window.confirm(`¿Retirar el reporte ${e.folio}? Dejará de verse en Buscar objetos.`)) run(() => api.retirarExtravio(e.id), 'Reporte retirado.') }}>
             <IconTrash width={18} height={18} /> Retirar reporte
           </button>
         )}

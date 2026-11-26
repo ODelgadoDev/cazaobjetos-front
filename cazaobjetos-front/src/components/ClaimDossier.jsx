@@ -1,3 +1,5 @@
+import { sendCommentOnEnter } from '../lib/commentKeys.js'
+import FormHelp from './FormHelp.jsx'
 import ConversationAuthor from './ConversationAuthor.jsx'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { agregarEnlaceEvidenciaReclamo, agregarEvidenciaReclamo, comentarReclamo, getActividadReclamo, getEvidenciasReclamo } from '../lib/api.js'
@@ -105,9 +107,10 @@ export default function ClaimDossier({ id, canContribute, onUpdated }) {
           </li>)}
         </ol>}
         {canContribute && <form className="claim-comment-form" onSubmit={send}>
+        <FormHelp title="Para qué sirve el comentario">Pide un detalle o acuerda lugar y hora con la otra persona. En escritorio, Enter envía y Shift+Enter agrega una línea.</FormHelp>
           <div className="field">
             <label htmlFor={`comment-${id}`}><ConversationAuthor name={usuario.nombre} degree={usuario.carrera} photo={usuario.fotoPerfil} /></label>
-            <textarea id={`comment-${id}`} className="textarea" value={body} maxLength={2000} disabled={saving}
+            <textarea id={`comment-${id}`} onKeyDown={sendCommentOnEnter} className="textarea" value={body} maxLength={2000} disabled={saving}
               placeholder="Coordina la entrega o pregunta por el objeto" onChange={(e) => setBody(e.target.value)} />
           </div>
           <button className="btn btn--primary" disabled={!body.trim() || saving}>{saving ? 'Guardando…' : 'Enviar comentario'}</button>

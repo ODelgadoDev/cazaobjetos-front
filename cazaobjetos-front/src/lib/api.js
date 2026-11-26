@@ -7,7 +7,7 @@
  *   Las compilaciones de producción/PWA siempre usan el backend.
  */
 import * as real from './realApi.js'
-import { normalizedProfile, profileError, profilePhotoError, studentNumber } from './profile.js'
+import { normalizedProfile, profileError, profilePhotoError, studentNumber, institutionalEmail } from './profile.js'
 import { seed } from './mockData.js'
 import { ESTADOS_ACTIVOS, ESTADOS_CERRADOS } from './constants.js'
 
@@ -80,13 +80,13 @@ export async function login(email, password) {
 // data: { nombre, correo, password, carrera, edificio } -> el back envía un código al correo
 export async function registrar({ nombre, correo, password, carrera, edificio }) {
   if (!USE_MOCK) return real.registrar({ nombre, correo, password, carrera, edificio })
-  if (!studentNumber(correo, 'estudiante')) return fail('Usa un correo de alumno: a + 10 dígitos + @utch.edu.mx.')
+  if (!institutionalEmail(correo)) return fail('Usa un correo del dominio @utch.edu.mx.')
   const problem = profileError({ nombre, carrera, edificio })
   if (problem) return fail(problem)
   const c = correo.trim().toLowerCase()
   if (db.usuarios[c] || db.pendientes[c]) return fail('Este correo ya está registrado. Inicia sesión o verifica tu cuenta.')
   const id = nextId++
-  db.pendientes[c] = { id, nombre: nombre.trim(), correo: c, matricula: studentNumber(c, 'estudiante'), carrera: carrera.trim(), edificio: edificio.trim(), rol: 'estudiante' }
+  db.pendientes[c] = { id, nombre: nombre.trim(), correo: c, matricula: studentNumber(c, 'estudiante'), carrera: carrera.trim(), edificio: edificio?.trim() || null, rol: 'estudiante' }
   db.passwords[c] = password
   return wait({ ok: true })
 }
@@ -173,8 +173,8 @@ export async function listHallazgos({ q = '', categoria = 'Todos', zona = 'Todos
 export async function getHallazgo(id) {
   if (!USE_MOCK) return real.getHallazgo(id)
   const h = db.hallazgos.find((x) => x.id === Number(id))
-  const active = db.reclamos.find((claim) => claim.hallazgoId === h?.id && claim.solicitante.id === yo.id && ESTADOS_ACTIVOS.includes(claim.estado))
-  return h ? wait({ ...h, reclamoActivoId: active?.id || null, permisos: permisosHallazgo(h) }) : fail('No encontramos ese objeto.')
+  const existing = db.reclamos.find((claim) => claim.hallazgoId === h?.id && claim.solicitante.id === yo.id && (ESTADOS_ACTIVOS.includes(claim.estado) || claim.estado === 'entregado'))
+  return h ? wait({ ...h, miSolicitudId: existing?.id || null, permisos: permisosHallazgo(h) }) : fail('No encontramos ese objeto.')
 }
 
 // Responsables posibles al delegar: docentes o secretaría

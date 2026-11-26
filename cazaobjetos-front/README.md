@@ -2,22 +2,22 @@
 
 ## Arrancar la app local integrada
 
-Esta rama usa el backend de prueba de `cazaobjetos-backend-primer-uso` con la migración V14.
+Esta rama usa el backend de prueba de `cazaobjetos-backend-minimalista-1.2`.
 
 ```bash
-cd ~/Documentos/cazaobjetos-front-primer-uso/cazaobjetos-front
+cd ~/Documentos/cazaobjetos-front-minimalista-1.2/cazaobjetos-front
 ./run.sh
 ```
 
-El frontend abre en http://127.0.0.1:4173 y su API usa el puerto 18090. El launcher reutiliza una API activa. Si tiene que iniciarla, el backend de prueba requiere un PostgreSQL preparado y su archivo local `.env`. Se puede configurar otro backend compatible mediante `CAZA_API_PROXY`.
+El frontend abre en http://127.0.0.1:4182 y su API usa el puerto 18092. El launcher reutiliza una API activa. Si tiene que iniciarla, el backend de prueba requiere un PostgreSQL preparado y su archivo local `.env`. Se puede configurar otro backend compatible mediante `CAZA_API_PROXY`.
 
-La prueba local utiliza una copia independiente de la base habitual. Las operaciones que hagas en esta variante se guardan en esa copia.
+La prueba local usa su propia base persistente, `caza_minimalista_12`.
 
 Cuentas demo del backend: `alumno.demo@utch.edu.mx`, `reclamante.demo@utch.edu.mx`, `docente.demo@utch.edu.mx` y `secretaria.demo@utch.edu.mx`. Usan DEV_PASSWORD de la configuración local del backend cuando se crean. Cambiar esa variable después no cambia sus contraseñas existentes.
 
 ## Registro y correo local
 
-Si el backend local tiene habilitado el correo de desarrollo, consulta el buzón Mailpit en http://127.0.0.1:8025. Para registrar una cuenta ficticia usa Crear cuenta, abre el mensaje de Mailpit y pega el código completo de 43 caracteres en Verificar correo. La contraseña requiere al menos 12 caracteres y admite hasta 72 bytes UTF-8.
+Si el backend local tiene habilitado el correo de desarrollo, consulta el buzón Mailpit en http://127.0.0.1:8025. El registro admite matrícula de 10 dígitos con generación de correo o captura de correo institucional. Pide carrera o área y deja el edificio opcional en Mi cuenta. Si activaste el modo de prueba local, pulsa «Verificar correo» después de crear la cuenta. En modo normal, pega el código completo de 43 caracteres. La contraseña requiere al menos 12 caracteres y admite hasta 72 bytes UTF-8.
 
 La recuperación de contraseña usa otro código de 43 caracteres. Cambiarla revoca las sesiones anteriores y devuelve a la pantalla de acceso. Las pruebas locales capturan el correo en Mailpit. La entrega institucional real requiere la configuración SMTP autorizada del backend.
 
@@ -68,9 +68,9 @@ En la rama de prueba se puede responder «Lo encontré» desde el reporte origin
 - El service worker también se habilita en desarrollo para las pruebas de Web Push. Para comprobar el paquete de producción:
   ```bash
   VITE_API_URL=/api/v1 npm run build
-  CAZA_API_PROXY=http://127.0.0.1:18090 npm run preview
+  CAZA_API_PROXY=http://127.0.0.1:18092 npm run preview
   ```
-  y abre http://localhost:4173. El botón «Instalar» aparece en el inicio de sesión y en la barra superior; abre el diálogo nativo cuando el navegador lo permite y muestra instrucciones manuales en los demás casos.
+  y abre http://localhost:4182. El botón «Instalar» aparece en el inicio de sesión y en la barra superior; abre el diálogo nativo cuando el navegador lo permite y muestra instrucciones manuales en los demás casos.
 - Para instalarla en un celular necesita **HTTPS**: súbanla a Vercel o Netlify.
 - Android/Chrome: botón «Instalar» o menú ⋮ → «Instalar aplicación». iPhone/Safari: botón «Instalar» → Compartir → «Agregar a pantalla de inicio».
 - Sin conexión abre la app y lo ya cargado; los datos de la API siempre van a la red (no se guardan en caché) y se muestra un aviso.

@@ -10,7 +10,7 @@ export const ESTADOS_RECLAMO = {
   requiere_pruebas: { label: 'Requiere pruebas', chip: 'pend', etapa: 2 },
   aprobado: { label: 'Aceptado · falta entregar', chip: 'ok', etapa: 3 },
   rechazado: { label: 'Rechazado', chip: 'peligro', etapa: 2 },
-  entregado: { label: 'Cerrado · Entregado', chip: 'cat', etapa: 4 },
+  entregado: { label: 'Entregado', chip: 'cat', etapa: 4 },
   cerrado: { label: 'Cerrado · otro reclamo completado', chip: 'cat', etapa: 4 },
   cancelado: { label: 'Cancelado', chip: 'cat', etapa: 1 },
 }

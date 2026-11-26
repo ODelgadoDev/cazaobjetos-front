@@ -1,3 +1,4 @@
+import FormHelp from './FormHelp.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { quitarFotoPerfil, subirFotoPerfil } from '../lib/api.js'
 import { profilePhotoError } from '../lib/profile.js'
@@ -47,6 +48,7 @@ export default function ProfilePhotoEditor({ perfil, disabled, onSaved, onBusy }
         <UserAvatar user={perfil} src={file ? preview : remove ? null : perfil.fotoPerfil} />
       </span>
       <div className="account-photo-editor__controls">
+        <FormHelp title="Cómo cambiar tu foto">Elige una foto y revisa la vista previa. Pulsa «Guardar foto» para que aparezca en tu cuenta.</FormHelp>
         <div className="account-photo-editor__buttons">
           <input ref={input} className="sr-only" type="file" accept="image/jpeg,image/png" aria-label="Elegir foto de perfil" onChange={choose} disabled={disabled} tabIndex={-1} />
           <button type="button" className="btn btn--secondary" onClick={() => input.current?.click()} disabled={disabled}>

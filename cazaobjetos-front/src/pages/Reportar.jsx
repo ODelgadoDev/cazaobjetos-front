@@ -1,3 +1,4 @@
+import FormHelp from '../components/FormHelp.jsx'
 import { CustodyFields } from '../components/CustodyEditor.jsx'
 import { useReportDraft } from '../context/ReportDraftContext.jsx'
 import Modal from '../components/Modal.jsx'
@@ -78,6 +79,7 @@ export function FormEncontre({ edicion }) {
 
   return (
     <form className="card" onSubmit={enviar} noValidate>
+      <FormHelp title="Cómo publicar un hallazgo">{edicion ? 'Corrige los datos del hallazgo y guarda los cambios. Las fotos se editan en su propia sección.' : 'Describe lo que encontraste e indica dónde está ahora. Si alguien lo reconoce, podrá solicitar la devolución.'}</FormHelp>
       {!edicion && <p className="account-help">Publicas como <strong>{usuario.nombre}</strong></p>}
       {!edicion && draft.dirty && <div className="draft-actions"><button type="button" className="link-green" onClick={() => setDiscarding(true)}>Descartar borrador</button></div>}
       <Modal open={discarding} onClose={() => setDiscarding(false)} title="¿Descartar el borrador?"><div className="btn-row"><button type="button" className="btn btn--secondary" onClick={() => setDiscarding(false)}>Seguir editando</button><button type="button" className="btn btn--danger" onClick={() => { resetDraft(); setError(''); setDiscarding(false) }}>Descartar</button></div></Modal>
@@ -143,6 +145,9 @@ export function FormPerdi({ edicion }) {
 
   return (
     <form className="card" onSubmit={enviar} noValidate>
+      <FormHelp title="Cómo publicar un extravío">
+        {edicion ? 'Corrige los datos del extravío y guarda los cambios.' : 'Describe lo que perdiste y dónde fue. Tu publicación aparecerá en Buscar objetos para que alguien pueda avisarte si lo encuentra.'}
+      </FormHelp>
       {!edicion && <p className="account-help">Publicas como <strong>{usuario.nombre}</strong></p>}
       {!edicion && draft.dirty && <div className="draft-actions"><button type="button" className="link-green" onClick={() => setDiscarding(true)}>Descartar borrador</button></div>}
       <Modal open={discarding} onClose={() => setDiscarding(false)} title="¿Descartar el borrador?"><div className="btn-row"><button type="button" className="btn btn--secondary" onClick={() => setDiscarding(false)}>Seguir editando</button><button type="button" className="btn btn--danger" onClick={() => { resetDraft({ form: { titulo: '', categoria: 'Electrónica', lugar: '', fecha: hoyISO(), descripcion: '', alertas: true }, imagen: null, requestKey: crypto.randomUUID() }); setError(''); setDiscarding(false) }}>Descartar</button></div></Modal>

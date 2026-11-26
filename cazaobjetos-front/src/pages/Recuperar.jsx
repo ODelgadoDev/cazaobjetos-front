@@ -1,3 +1,4 @@
+import FormHelp from '../components/FormHelp.jsx'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { USE_MOCK, restablecerPassword, solicitarRecuperacion } from '../lib/api.js'
@@ -57,6 +58,7 @@ export default function Recuperar() {
     >
       {paso === 1 ? (
         <form className="card" onSubmit={pedirCodigo} noValidate>
+          <FormHelp title="Cómo recuperar el acceso">Escribe el correo de tu cuenta. Si está registrado, recibirás un código para elegir una contraseña nueva.</FormHelp>
           <div className="field">
             <label htmlFor="rc-correo">Correo institucional</label>
             <input id="rc-correo" className="input" type="email" autoComplete="email" placeholder={`matricula${DOMINIO}`} value={correo} onChange={(e) => setCorreo(e.target.value)} />
@@ -66,6 +68,7 @@ export default function Recuperar() {
         </form>
       ) : (
         <form className="card" onSubmit={restablecer} noValidate>
+          <FormHelp title="Cómo cambiar la contraseña">Pega el código de recuperación y elige una contraseña nueva. Con ella podrás volver a iniciar sesión.</FormHelp>
           {aviso && <div className="notice notice--ok" role="status">{aviso}</div>}
           <CampoCodigo id="rc-codigo" value={codigo} onChange={setCodigo} />
           <div className="field">

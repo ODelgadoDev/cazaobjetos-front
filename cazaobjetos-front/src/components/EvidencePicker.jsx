@@ -1,3 +1,4 @@
+import FormHelp from './FormHelp.jsx'
 import { useId, useState } from 'react'
 import { IconImage } from './Icons.jsx'
 
@@ -44,10 +45,11 @@ export default function EvidencePicker({ files, urls, draftUrl = '', onDraftUrlC
     if (images.length) { event.preventDefault(); select(images) }
   }
   return (
-    <details className="claim-attachments" onPaste={paste}>
-      <summary><IconImage width={17} height={17} /> Fotos opcionales{total > 0 && ` (${total})`}</summary>
+    <section className="claim-attachments" aria-label="Fotos opcionales" onPaste={paste}>
+      <h3 className="photo-options-heading"><IconImage width={17} height={17} /> Agregar foto <span className="account-optional">Opcional</span>{total > 0 && ` (${total})`}</h3>
+      <FormHelp title="Cómo adjuntar una foto">Puedes elegir un archivo JPG o PNG, pegar una imagen copiada en esta sección o usar un enlace directo.</FormHelp>
       <div className="claim-section__body">
-        {total < max && <>
+        {total < max && <div className="photo-evidence-inputs" tabIndex={0} aria-label="Área donde puedes pegar una imagen">
           <div className="field">
             <label htmlFor={id}>Subir foto</label>
             <input id={id} type="file" className="input" multiple={max > 1} accept="image/jpeg,image/png" disabled={disabled} onChange={(event) => { select([...(event.target.files || [])]); event.target.value = '' }} />
@@ -60,7 +62,7 @@ export default function EvidencePicker({ files, urls, draftUrl = '', onDraftUrlC
               <button type="button" className="btn btn--secondary" onClick={addUrl} disabled={disabled || !draftUrl.trim()}>Añadir enlace</button>
             </div>
           </div>
-        </>}
+        </div>}
         {draftUrl.trim() && <p className="account-help">El enlace se adjuntará al enviar.</p>}
         {(total > 0) && <ul className="attachment-list">
           {files.map((file, index) => <li key={`file-${index}`}>
@@ -74,6 +76,6 @@ export default function EvidencePicker({ files, urls, draftUrl = '', onDraftUrlC
         </ul>}
         {error && <p className="help help--error" role="alert">{error}</p>}
       </div>
-    </details>
+    </section>
   )
 }
