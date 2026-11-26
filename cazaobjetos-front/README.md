@@ -17,7 +17,7 @@ Cuentas demo del backend: `alumno.demo@utch.edu.mx`, `reclamante.demo@utch.edu.m
 
 ## Registro y correo local
 
-Si el backend local tiene habilitado el correo de desarrollo, consulta el buzón Mailpit en http://127.0.0.1:8025. El registro admite matrícula de 10 dígitos con generación de correo o captura de correo institucional. Pide carrera o área y deja el edificio opcional en Mi cuenta. Si activaste el modo de prueba local, pulsa «Verificar correo» después de crear la cuenta. En modo normal, pega el código completo de 43 caracteres. La contraseña requiere al menos 8 caracteres, un número y un símbolo. Admite hasta 72 bytes UTF-8.
+Si el backend local tiene habilitado el correo de desarrollo, consulta el buzón Mailpit en http://127.0.0.1:8025. El registro admite matrícula de 10 dígitos con generación de correo o captura de un correo de cualquier dominio. Pide carrera o área y deja el edificio opcional en Mi cuenta. Si activaste el modo de prueba local, pulsa «Verificar correo» después de crear la cuenta. En modo normal, pega el código completo de 43 caracteres. La contraseña requiere al menos 8 caracteres, un número y un símbolo. Admite hasta 72 bytes UTF-8.
 
 La recuperación de contraseña usa otro código de 43 caracteres. Cambiarla revoca las sesiones anteriores y devuelve a la pantalla de acceso. Las pruebas locales capturan el correo en Mailpit. La entrega institucional real requiere la configuración SMTP autorizada del backend.
 

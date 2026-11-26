@@ -155,7 +155,7 @@ export default function MiCuenta() {
         </div>
         <ProfilePhotoEditor perfil={perfil} disabled={disabled} onSaved={update} onBusy={setOcupado} />
         <dl className="account-identifiers">
-          <div><dt>Correo institucional</dt><dd>{perfil.correo}</dd></div>
+          <div><dt>Correo</dt><dd>{perfil.correo}</dd></div>
           <div><dt>Matrícula</dt><dd className="mono">{perfil.matricula || (perfil.rol === 'estudiante' ? 'El correo no incluye matrícula' : 'No aplica a esta cuenta')}</dd></div>
         </dl>
         <p className="account-help">El correo y la matrícula se obtienen de tu cuenta y no se editan aquí.</p>

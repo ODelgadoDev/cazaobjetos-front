@@ -5,8 +5,7 @@ import useRegistrationOptions from '../lib/useRegistrationOptions.js'
 import { registrar } from '../lib/api.js'
 import ChoiceField from '../components/ChoiceField.jsx'
 import FormHelp from '../components/FormHelp.jsx'
-import { emailFromStudentNumber, institutionalEmail, profileError } from '../lib/profile.js'
-import { DOMINIO } from '../lib/constants.js'
+import { emailFromStudentNumber, validEmail, profileError } from '../lib/profile.js'
 import PasswordInput from '../components/PasswordInput.jsx'
 import AuthShell, { VolverAlLogin } from '../components/AuthShell.jsx'
 
@@ -18,7 +17,7 @@ export default function Registro() {
   const [enviando, setEnviando] = useState(false)
   const [conMatricula, setConMatricula] = useState('si')
   const tieneMatricula = conMatricula === 'si'
-  const correo = tieneMatricula ? emailFromStudentNumber(f.matricula) : institutionalEmail(f.correo)
+  const correo = tieneMatricula ? emailFromStudentNumber(f.matricula) : validEmail(f.correo)
   const carrera = tieneMatricula ? f.carrera.trim() : f.area
   const set = (k) => (e) => {
     const value = e.target.value
@@ -31,9 +30,9 @@ export default function Registro() {
     if (enviando || loadingMode || modeError) return
     setError('')
     if (f.nombre.trim().length < 3) return setError('Escribe tu nombre completo.')
-    if (!correo) return setError(conMatricula === 'si'
+    if (!correo) return setError(tieneMatricula
       ? 'Escribe los 10 dígitos de tu matrícula.'
-      : `Escribe un correo institucional que termine en ${DOMINIO}.`)
+      : 'Escribe un correo válido.')
     if (!tieneMatricula && !carrera) return setError('Elige Docente u Otro.')
     const profileProblem = profileError({ nombre: f.nombre, carrera })
     if (profileProblem) return setError(profileProblem)
@@ -51,7 +50,7 @@ export default function Registro() {
   }
 
   return (
-    <AuthShell titulo="Crea tu cuenta" intro={demoVerification ? "Completa tus datos para crear tu cuenta de prueba." : loadingMode ? "Regístrate con tu correo institucional." : "Regístrate con tu correo institucional. Te enviaremos un código para confirmarlo."} pie={<VolverAlLogin />}>
+    <AuthShell titulo="Crea tu cuenta" intro={demoVerification ? "Completa tus datos para crear tu cuenta de prueba." : loadingMode ? "Regístrate con tu correo." : "Regístrate con tu correo. Te enviaremos un código para confirmarlo."} pie={<VolverAlLogin />}>
       <form className="card" onSubmit={onSubmit} noValidate>
         <FormHelp title="Cómo crear tu cuenta">
           Completa tus datos, elige una contraseña y activa tu cuenta en la pantalla siguiente para poder iniciar sesión.
@@ -81,7 +80,7 @@ export default function Registro() {
           </div>
         </> : <div className="field">
           <label htmlFor="r-correo">Correo</label>
-          <input id="r-correo" className="input" type="email" autoComplete="email" placeholder={`nombre${DOMINIO}`}
+          <input id="r-correo" className="input" type="email" autoComplete="email" placeholder="nombre@ejemplo.com"
             required maxLength={254} disabled={enviando} value={f.correo} onChange={set('correo')} />
         </div>}
         {tieneMatricula ? <div className="field">

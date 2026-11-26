@@ -7,7 +7,7 @@
  *   Las compilaciones de producción/PWA siempre usan el backend.
  */
 import * as real from './realApi.js'
-import { normalizedProfile, profileError, profilePhotoError, studentNumber, institutionalEmail } from './profile.js'
+import { normalizedProfile, profileError, profilePhotoError, studentNumber, validEmail } from './profile.js'
 import { seed } from './mockData.js'
 import { ESTADOS_ACTIVOS, ESTADOS_CERRADOS } from './constants.js'
 
@@ -80,7 +80,7 @@ export async function login(email, password) {
 // data: { nombre, correo, password, carrera, edificio } -> el back envía un código al correo
 export async function registrar({ nombre, correo, password, carrera, edificio }) {
   if (!USE_MOCK) return real.registrar({ nombre, correo, password, carrera, edificio })
-  if (!institutionalEmail(correo)) return fail('Usa un correo del dominio @utch.edu.mx.')
+  if (!validEmail(correo)) return fail('Escribe un correo válido.')
   const problem = profileError({ nombre, carrera, edificio })
   if (problem) return fail(problem)
   const c = correo.trim().toLowerCase()

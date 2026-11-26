@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { USE_MOCK } from '../lib/api.js'
-import { DOMINIO } from '../lib/constants.js'
+import { validEmail } from '../lib/profile.js'
 import PasswordInput from '../components/PasswordInput.jsx'
 import AuthShell from '../components/AuthShell.jsx'
 
@@ -18,13 +18,14 @@ export default function Login() {
   async function onSubmit(e) {
     e.preventDefault()
     setError(null)
-    if (!email.trim().toLowerCase().endsWith(DOMINIO)) {
-      setError({ message: `Usa tu correo institucional que termina en ${DOMINIO}.` })
+    const correo = validEmail(email)
+    if (!correo) {
+      setError({ message: 'Escribe un correo válido.' })
       return
     }
     setCargando(true)
     try {
-      await login(email, password)
+      await login(correo, password)
     } catch (err) {
       setError(err)
       setCargando(false)
@@ -34,7 +35,7 @@ export default function Login() {
   return (
     <AuthShell
       titulo="Inicia sesión en CazaObjetos"
-      intro="Solo la comunidad UTCH puede reclamar objetos. Entra con tu correo institucional."
+      intro="Entra con el correo de tu cuenta."
       conInstalar
       pie={
         <>
@@ -53,8 +54,8 @@ export default function Login() {
         <FormHelp title="Cómo iniciar sesión">Escribe el correo con el que creaste tu cuenta y tu contraseña. Si la cuenta sigue pendiente, usa «Verificar mi correo».</FormHelp>
         {state?.aviso && <div className="notice notice--ok" role="status">{state.aviso}</div>}
         <div className="field">
-          <label htmlFor="email">Correo institucional</label>
-          <input id="email" className="input" type="email" autoComplete="username" placeholder={`matricula${DOMINIO}`} value={email} onChange={(e) => setEmail(e.target.value)} />
+          <label htmlFor="email">Correo</label>
+          <input id="email" className="input" type="email" autoComplete="username" placeholder="nombre@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="field">
           <label htmlFor="pass">Contraseña <Link className="link" to="/recuperar" state={{ correo: email }}>¿La olvidaste?</Link></label>

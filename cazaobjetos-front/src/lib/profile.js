@@ -23,9 +23,9 @@ export function profileError(data) {
   return ''
 }
 
-export function institutionalEmail(email) {
+export function validEmail(email) {
   const normalized = email.trim().toLowerCase()
-  return /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@utch\.edu\.mx$/.test(normalized) ? normalized : ''
+  return normalized.length <= 254 && /^[^@\s]+@[^@\s]+$/.test(normalized) ? normalized : ''
 }
 
 export function emailFromStudentNumber(number) {

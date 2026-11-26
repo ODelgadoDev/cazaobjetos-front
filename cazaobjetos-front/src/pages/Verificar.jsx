@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import useRegistrationOptions from '../lib/useRegistrationOptions.js'
 import { USE_MOCK, activarCuentaPrueba, reenviarCodigo, verificarCorreo } from '../lib/api.js'
-import { DOMINIO } from '../lib/constants.js'
+import { validEmail } from '../lib/profile.js'
 import AuthShell, { VolverAlLogin } from '../components/AuthShell.jsx'
 
 const ESPERA = 60 // segundos entre reenvíos
@@ -31,19 +31,19 @@ export default function Verificar() {
 
   useEffect(() => { if (state?.recienCreada && !loadingMode && !modeError && !demoVerification) iniciarEspera() }, [loadingMode, modeError, demoVerification]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const correoOk = correo.trim().toLowerCase().endsWith(DOMINIO)
+  const correoOk = validEmail(correo)
 
   async function verificar(e) {
     e.preventDefault()
     if (enviando || loadingMode || modeError) return
     setError('')
-    if (!correoOk) return setError(`Escribe tu correo institucional ${DOMINIO}.`)
+    if (!correoOk) return setError('Escribe un correo válido.')
     if (!demoVerification && !(USE_MOCK ? /^\d{6}$/ : /^[A-Za-z0-9_-]{43}$/).test(codigo.trim())) return setError('Copia el código completo recibido por correo.')
     setEnviando(true)
     try {
-      if (demoVerification) await activarCuentaPrueba(correo)
-      else await verificarCorreo(correo.trim().toLowerCase(), codigo)
-      navigate('/login', { replace: true, state: { correo: correo.trim().toLowerCase(), aviso: demoVerification ? 'Cuenta de prueba activada. Ya puedes iniciar sesión.' : 'Correo verificado. Ya puedes iniciar sesión.' } })
+      if (demoVerification) await activarCuentaPrueba(correoOk)
+      else await verificarCorreo(correoOk, codigo)
+      navigate('/login', { replace: true, state: { correo: correoOk, aviso: demoVerification ? 'Cuenta de prueba activada. Ya puedes iniciar sesión.' : 'Correo verificado. Ya puedes iniciar sesión.' } })
     } catch (err) {
       setError(err.message)
       setEnviando(false)
@@ -53,23 +53,23 @@ export default function Verificar() {
   async function reenviar() {
     setError('')
     setAviso('')
-    if (!correoOk) return setError(`Escribe tu correo institucional ${DOMINIO} para enviarte otro código.`)
+    if (!correoOk) return setError('Escribe un correo válido para recibir otro código.')
     try {
-      await reenviarCodigo(correo.trim().toLowerCase())
+      await reenviarCodigo(correoOk)
       setAviso('Te enviamos un código nuevo. Revisa también la carpeta de spam.')
       iniciarEspera()
     } catch (err) { setError(err.message) }
   }
 
   return (
-    <AuthShell titulo="Verifica tu correo" intro={demoVerification ? "Activa tu cuenta de prueba sin código." : loadingMode ? "Preparando la verificación…" : "Ingresa el código que recibiste en tu correo institucional para activar tu cuenta."} pie={<VolverAlLogin />}>
+    <AuthShell titulo="Verifica tu correo" intro={demoVerification ? "Activa tu cuenta de prueba sin código." : loadingMode ? "Preparando la verificación…" : "Ingresa el código que recibiste en tu correo para activar tu cuenta."} pie={<VolverAlLogin />}>
       <form className="card" onSubmit={verificar} noValidate>
         <FormHelp title="Para qué se activa la cuenta">{demoVerification ? 'Activa la cuenta de prueba con el correo que registraste. Después podrás iniciar sesión con tu contraseña.' : 'Usa el código que llegó a tu correo para activar tu cuenta. Después podrás iniciar sesión.'}</FormHelp>
         {modeError && <div className="notice notice--peligro" role="alert"><span>{modeError}</span><button type="button" className="btn btn--secondary" onClick={retryMode}>Reintentar</button></div>}
         {!loadingMode && !modeError && demoVerification && <div className="notice notice--info" role="status">Modo de prueba · no necesitas recibir un correo.</div>}
         {!loadingMode && !modeError && (aviso || state?.recienCreada) && <div className="notice notice--ok" role="status">{aviso || (demoVerification ? 'Cuenta creada. Pulsa «Verificar correo» para activarla.' : `Cuenta creada. Enviamos un código de verificación a ${state.correo}.`)}</div>}
         <div className="field">
-          <label htmlFor="v-correo">Correo institucional</label>
+          <label htmlFor="v-correo">Correo</label>
           <input id="v-correo" className="input" type="email" autoComplete="email" value={correo} disabled={enviando} onChange={(e) => { setCorreo(e.target.value); setError(''); setAviso('') }} />
         </div>
         {!loadingMode && !modeError && !demoVerification && <CampoCodigo id="v-codigo" value={codigo} onChange={setCodigo} />}

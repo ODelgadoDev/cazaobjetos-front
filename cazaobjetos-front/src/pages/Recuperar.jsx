@@ -3,7 +3,7 @@ import FormHelp from '../components/FormHelp.jsx'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { USE_MOCK, restablecerPassword, solicitarRecuperacion } from '../lib/api.js'
-import { DOMINIO } from '../lib/constants.js'
+import { validEmail } from '../lib/profile.js'
 import AuthShell, { VolverAlLogin } from '../components/AuthShell.jsx'
 import { CampoCodigo, useCuentaAtras } from './Verificar.jsx'
 
@@ -19,12 +19,12 @@ export default function Recuperar() {
   const [aviso, setAviso] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [espera, iniciarEspera] = useCuentaAtras()
-  const c = correo.trim().toLowerCase()
+  const c = validEmail(correo)
 
   async function pedirCodigo(e) {
     e?.preventDefault()
     setError('')
-    if (!c.endsWith(DOMINIO)) return setError(`Escribe tu correo institucional ${DOMINIO}.`)
+    if (!c) return setError('Escribe un correo válido.')
     setEnviando(true)
     try {
       await solicitarRecuperacion(c)
@@ -54,15 +54,15 @@ export default function Recuperar() {
   return (
     <AuthShell
       titulo="Recupera tu contraseña"
-      intro={paso === 1 ? 'Te enviaremos un código a tu correo institucional para que pongas una contraseña nueva.' : 'Ingresa el código que recibiste y elige tu nueva contraseña.'}
+      intro={paso === 1 ? 'Te enviaremos un código a tu correo para que pongas una contraseña nueva.' : 'Ingresa el código que recibiste y elige tu nueva contraseña.'}
       pie={<VolverAlLogin />}
     >
       {paso === 1 ? (
         <form className="card" onSubmit={pedirCodigo} noValidate>
           <FormHelp title="Cómo recuperar el acceso">Escribe el correo de tu cuenta. Si está registrado, recibirás un código para elegir una contraseña nueva.</FormHelp>
           <div className="field">
-            <label htmlFor="rc-correo">Correo institucional</label>
-            <input id="rc-correo" className="input" type="email" autoComplete="email" placeholder={`matricula${DOMINIO}`} value={correo} onChange={(e) => setCorreo(e.target.value)} />
+            <label htmlFor="rc-correo">Correo</label>
+            <input id="rc-correo" className="input" type="email" autoComplete="email" placeholder="nombre@ejemplo.com" value={correo} onChange={(e) => setCorreo(e.target.value)} />
           </div>
           {error && <div className="notice notice--peligro" role="alert">{error}</div>}
           <button className="btn btn--primary" disabled={enviando}>{enviando ? 'Enviando…' : 'Enviarme un código'}</button>
