@@ -165,8 +165,7 @@ function catalogParams({ q = '', categoria = 'Todos', zona = 'Todos', orden = 'r
   const params = new URLSearchParams({ q, page: page - 1, pageSize, sort: orden === 'antiguos' ? 'OLDEST' : 'RECENT' })
   if (categoria !== 'Todos') params.set('category', categories[categoria])
   if (zona !== 'Todos') params.set('location', zona)
-  if (found) params.set('status', 'AVAILABLE')
-  else if (estado !== 'Todos') params.set('status', estado === 'recuperado' ? 'RECOVERED' : 'ACTIVE')
+  if (!found && estado !== 'Todos') params.set('status', estado === 'recuperado' ? 'RECOVERED' : 'ACTIVE')
   return params
 }
 export async function listHallazgos(params = {}) {

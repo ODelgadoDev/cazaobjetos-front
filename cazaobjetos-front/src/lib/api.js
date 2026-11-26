@@ -162,7 +162,7 @@ export async function cambiarPassword({ actual, nueva }) {
 // ---------- Hallazgos ----------
 export async function listHallazgos({ q = '', categoria = 'Todos', zona = 'Todos', orden = 'recientes', page = 1, pageSize = 5 } = {}) {
   if (!USE_MOCK) return real.listHallazgos({ q, categoria, zona, orden, page, pageSize })
-  let items = db.hallazgos.filter((h) => h.estado !== 'entregado')
+  let items = db.hallazgos.filter((h) => h.estado !== 'retirado')
   if (q) items = items.filter((h) => (h.titulo + h.lugar + h.categoria).toLowerCase().includes(q.toLowerCase()))
   if (categoria !== 'Todos') items = items.filter((h) => h.categoria === categoria)
   if (zona !== 'Todos') items = items.filter((h) => h.zona === zona)

@@ -59,4 +59,16 @@ section.claim-attachments { display: grid; gap: 8px; padding: 12px; }
 .photo-evidence-inputs { display: grid; gap: 8px; min-width: 0; }
 .notice-images { position: relative; }
 .photo__delivered { position: absolute; top: 8px; right: 8px; border-radius: 6px; background: var(--superficie); color: var(--verde-oscuro); padding: 4px 8px; font-weight: 750; font-size: .8rem; }
+/* La foto conserva su encuadre y la marca de referencia permanece visible. */
+.photo > .photo__delivered {
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  padding: 8px 16px;
+  border: 2px solid #b7ed87;
+  background: #17211d;
+  color: #f5ffef;
+  font-size: clamp(1.1rem, 4vw, 1.55rem);
+  line-height: 1.2;
+  text-transform: uppercase;
+}
 .notice-images .photo__delivered { top: auto; bottom: 4px; right: 3px; left: 3px; text-align: center; padding: 2px 0; font-size: .63rem; }
