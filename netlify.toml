@@ -1,0 +1,7 @@
+[build]
+  base = "cazaobjetos-front"
+  command = "npm run build && node scripts/netlify-redirects.mjs"
+  publish = "dist"
+
+[build.environment]
+  VITE_API_URL = "/api/v1"
