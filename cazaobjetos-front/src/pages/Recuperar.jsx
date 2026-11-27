@@ -1,15 +1,17 @@
 import { PASSWORD_REQUIREMENTS, passwordError } from '../lib/password.js'
 import FormHelp from '../components/FormHelp.jsx'
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { USE_MOCK, restablecerPassword, solicitarRecuperacion } from '../lib/api.js'
 import { validEmail } from '../lib/profile.js'
+import useRegistrationOptions from '../lib/useRegistrationOptions.js'
 import AuthShell, { VolverAlLogin } from '../components/AuthShell.jsx'
 import { CampoCodigo, useCuentaAtras } from './Verificar.jsx'
 
 export default function Recuperar() {
   const navigate = useNavigate()
   const { state } = useLocation()
+  const { openRegistration, loading: loadingMode, error: modeError } = useRegistrationOptions()
   const [paso, setPaso] = useState(1)
   const [correo, setCorreo] = useState(state?.correo ?? '')
   const [codigo, setCodigo] = useState('')
@@ -51,12 +53,15 @@ export default function Recuperar() {
     }
   }
 
+  if (openRegistration) return <Navigate to="/login" replace state={{ correo }} />
+
   return (
     <AuthShell
       titulo="Recupera tu contraseña"
       intro={paso === 1 ? 'Te enviaremos un código a tu correo para que pongas una contraseña nueva.' : 'Ingresa el código que recibiste y elige tu nueva contraseña.'}
       pie={<VolverAlLogin />}
     >
+      {modeError && <div className="notice notice--peligro" role="alert">{modeError}</div>}
       {paso === 1 ? (
         <form className="card" onSubmit={pedirCodigo} noValidate>
           <FormHelp title="Cómo recuperar el acceso">Escribe el correo de tu cuenta. Si está registrado, recibirás un código para elegir una contraseña nueva.</FormHelp>
@@ -65,7 +70,7 @@ export default function Recuperar() {
             <input id="rc-correo" className="input" type="email" autoComplete="email" placeholder="nombre@ejemplo.com" value={correo} onChange={(e) => setCorreo(e.target.value)} />
           </div>
           {error && <div className="notice notice--peligro" role="alert">{error}</div>}
-          <button className="btn btn--primary" disabled={enviando}>{enviando ? 'Enviando…' : 'Enviarme un código'}</button>
+          <button className="btn btn--primary" disabled={enviando || loadingMode || !!modeError}>{enviando ? 'Enviando…' : 'Enviarme un código'}</button>
         </form>
       ) : (
         <form className="card" onSubmit={restablecer} noValidate>

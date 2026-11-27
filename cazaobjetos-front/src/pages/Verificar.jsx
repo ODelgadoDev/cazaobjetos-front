@@ -1,6 +1,6 @@
 import FormHelp from '../components/FormHelp.jsx'
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import useRegistrationOptions from '../lib/useRegistrationOptions.js'
 import { USE_MOCK, activarCuentaPrueba, reenviarCodigo, verificarCorreo } from '../lib/api.js'
 import { validEmail } from '../lib/profile.js'
@@ -21,7 +21,7 @@ export function useCuentaAtras() {
 export default function Verificar() {
   const navigate = useNavigate()
   const { state } = useLocation()
-  const { demoVerification, loading: loadingMode, error: modeError, retry: retryMode } = useRegistrationOptions()
+  const { demoVerification, openRegistration, loading: loadingMode, error: modeError, retry: retryMode } = useRegistrationOptions()
   const [correo, setCorreo] = useState(state?.correo ?? '')
   const [codigo, setCodigo] = useState('')
   const [error, setError] = useState('')
@@ -60,6 +60,8 @@ export default function Verificar() {
       iniciarEspera()
     } catch (err) { setError(err.message) }
   }
+
+  if (openRegistration) return <Navigate to="/login" replace state={{ correo, aviso: 'Ya puedes iniciar sesión con tu contraseña.' }} />
 
   return (
     <AuthShell titulo="Verifica tu correo" intro={demoVerification ? "Activa tu cuenta de prueba sin código." : loadingMode ? "Preparando la verificación…" : "Ingresa el código que recibiste en tu correo para activar tu cuenta."} pie={<VolverAlLogin />}>

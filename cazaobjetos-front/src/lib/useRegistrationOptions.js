@@ -3,14 +3,19 @@ import { getRegistrationOptions } from './api.js'
 
 export default function useRegistrationOptions() {
   const [revision, setRevision] = useState(0)
-  const [state, setState] = useState({ loading: true, demoVerification: false, error: '' })
+  const [state, setState] = useState({ loading: true, demoVerification: false, openRegistration: false, error: '' })
   useEffect(() => {
     const controller = new AbortController()
     setState((current) => ({ ...current, loading: true, error: '' }))
     getRegistrationOptions(controller.signal).then((options) => {
-      if (!controller.signal.aborted) setState({ loading: false, demoVerification: options.demoVerification === true, error: '' })
+      if (!controller.signal.aborted) setState({
+        loading: false,
+        demoVerification: options.demoVerification === true,
+        openRegistration: options.openRegistration === true,
+        error: '',
+      })
     }).catch(() => {
-      if (!controller.signal.aborted) setState({ loading: false, demoVerification: false, error: 'No pudimos cargar las opciones de registro.' })
+      if (!controller.signal.aborted) setState({ loading: false, demoVerification: false, openRegistration: false, error: 'No pudimos cargar las opciones de registro.' })
     })
     return () => controller.abort()
   }, [revision])

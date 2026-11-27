@@ -2,6 +2,7 @@ import { PASSWORD_REQUIREMENTS, passwordError } from '../lib/password.js'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useRegistrationOptions from '../lib/useRegistrationOptions.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { registrar } from '../lib/api.js'
 import ChoiceField from '../components/ChoiceField.jsx'
 import FormHelp from '../components/FormHelp.jsx'
@@ -11,7 +12,8 @@ import AuthShell, { VolverAlLogin } from '../components/AuthShell.jsx'
 
 export default function Registro() {
   const navigate = useNavigate()
-  const { demoVerification, loading: loadingMode, error: modeError, retry: retryMode } = useRegistrationOptions()
+  const { login } = useAuth()
+  const { demoVerification, openRegistration, loading: loadingMode, error: modeError, retry: retryMode } = useRegistrationOptions()
   const [f, setF] = useState({ nombre: '', correo: '', carrera: '', area: '', matricula: '', password: '', confirmar: '' })
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -42,7 +44,16 @@ export default function Registro() {
     setEnviando(true)
     try {
       await registrar({ nombre: f.nombre.trim(), correo, password: f.password, carrera })
-      navigate('/verificar', { state: { correo, recienCreada: true } })
+      if (!openRegistration) {
+        navigate('/verificar', { state: { correo, recienCreada: true } })
+        return
+      }
+      try {
+        await login(correo, f.password)
+        navigate('/', { replace: true })
+      } catch {
+        navigate('/login', { replace: true, state: { correo, aviso: 'Cuenta creada. Ya puedes iniciar sesión.' } })
+      }
     } catch (err) {
       setError(err.message)
       setEnviando(false)
@@ -50,10 +61,10 @@ export default function Registro() {
   }
 
   return (
-    <AuthShell titulo="Crea tu cuenta" intro={demoVerification ? "Completa tus datos para crear tu cuenta de prueba." : loadingMode ? "Regístrate con tu correo." : "Regístrate con tu correo. Te enviaremos un código para confirmarlo."} pie={<VolverAlLogin />}>
+    <AuthShell titulo="Crea tu cuenta" intro={openRegistration || loadingMode ? "Regístrate con tu correo." : demoVerification ? "Completa tus datos para crear tu cuenta de prueba." : "Regístrate con tu correo. Te enviaremos un código para confirmarlo."} pie={<VolverAlLogin />}>
       <form className="card" onSubmit={onSubmit} noValidate>
         <FormHelp title="Cómo crear tu cuenta">
-          Completa tus datos, elige una contraseña y activa tu cuenta en la pantalla siguiente para poder iniciar sesión.
+          {openRegistration ? 'Completa tus datos y elige una contraseña para entrar.' : 'Completa tus datos, elige una contraseña y activa tu cuenta para iniciar sesión.'}
         </FormHelp>
         {modeError && <div className="notice notice--peligro" role="alert"><span>{modeError}</span><button type="button" className="btn btn--secondary" onClick={retryMode}>Reintentar</button></div>}
         <div className="field">
